@@ -1,0 +1,382 @@
+{
+  "config": {
+    "address": "5835 Balmoral Road, Halifax, NS, B3H1A5",
+    "timezone": "America/Halifax",
+    "scheduleSource": "halifax"
+  },
+  "housemates": [
+    {
+      "id": "housemate_1",
+      "name": "Venkatraman",
+      "roomNumber": "1",
+      "whatsappNumber": "+19025550001",
+      "isActive": true
+    },
+    {
+      "id": "housemate_2",
+      "name": "Hariesh",
+      "roomNumber": "2",
+      "whatsappNumber": "+19025550002",
+      "isActive": true
+    },
+    {
+      "id": "housemate_3",
+      "name": "Sibi",
+      "roomNumber": "3",
+      "whatsappNumber": "+19025550003",
+      "isActive": true
+    },
+    {
+      "id": "housemate_4",
+      "name": "Nithin",
+      "roomNumber": "4",
+      "whatsappNumber": "+19025550004",
+      "isActive": false,
+      "notes": "Vacant"
+    },
+    {
+      "id": "housemate_5",
+      "name": "Kabilesh",
+      "roomNumber": "5",
+      "whatsappNumber": "+19025550005",
+      "isActive": true
+    },
+    {
+      "id": "housemate_6",
+      "name": "Ishita",
+      "roomNumber": "6",
+      "whatsappNumber": "+19025550006",
+      "isActive": true
+    },
+    {
+      "id": "housemate_7",
+      "name": "Gowri",
+      "roomNumber": "7",
+      "whatsappNumber": "+19025550007d",
+      "isActive": true
+    }
+  ],
+  "rooms": [
+    {
+      "id": "room_1",
+      "label": "Room 1",
+      "isActive": true,
+      "occupantId": "housemate_1"
+    },
+    {
+      "id": "room_2",
+      "label": "Room 2",
+      "isActive": true,
+      "occupantId": "housemate_2"
+    },
+    {
+      "id": "room_3",
+      "label": "Room 3",
+      "isActive": true,
+      "occupantId": "housemate_3"
+    },
+    {
+      "id": "room_4",
+      "label": "Room 4",
+      "isActive": false,
+      "occupantId": "housemate_4"
+    },
+    {
+      "id": "room_5",
+      "label": "Room 5",
+      "isActive": true,
+      "occupantId": "housemate_5"
+    },
+    {
+      "id": "room_6",
+      "label": "Room 6",
+      "isActive": true,
+      "occupantId": "housemate_6"
+    },
+    {
+      "id": "room_7",
+      "label": "Room 7",
+      "isActive": true,
+      "occupantId": "housemate_7"
+    }
+  ],
+  "collectionEvents": [
+    {
+      "id": "event_2026_02_09",
+      "date": "2026-02-09",
+      "weekStart": "2026-02-09",
+      "weekEnd": "2026-02-09",
+      "streams": [
+        "recycling"
+      ],
+      "status": "scheduled",
+      "source": "halifax-live"
+    },
+    {
+      "id": "event_2026_02_14",
+      "date": "2026-02-14",
+      "weekStart": "2026-02-09",
+      "weekEnd": "2026-02-14",
+      "streams": [
+        "garbage"
+      ],
+      "status": "scheduled",
+      "source": "halifax-live"
+    },
+    {
+      "id": "event_2026_02_23",
+      "date": "2026-02-23",
+      "weekStart": "2026-02-23",
+      "weekEnd": "2026-02-23",
+      "streams": [
+        "recycling"
+      ],
+      "status": "scheduled",
+      "source": "halifax-live"
+    },
+    {
+      "id": "event_2026_03_02",
+      "date": "2026-03-02",
+      "weekStart": "2026-02-23",
+      "weekEnd": "2026-03-02",
+      "streams": [
+        "garbage"
+      ],
+      "status": "scheduled",
+      "source": "halifax-live"
+    },
+    {
+      "id": "event_2026_03_09",
+      "date": "2026-03-09",
+      "weekStart": "2026-03-09",
+      "weekEnd": "2026-03-09",
+      "streams": [
+        "recycling"
+      ],
+      "status": "scheduled",
+      "source": "halifax-live"
+    },
+    {
+      "id": "event_2026_03_16",
+      "date": "2026-03-16",
+      "weekStart": "2026-03-09",
+      "weekEnd": "2026-03-16",
+      "streams": [
+        "garbage"
+      ],
+      "status": "scheduled",
+      "source": "halifax-live"
+    },
+    {
+      "id": "event_2026_03_23",
+      "date": "2026-03-23",
+      "weekStart": "2026-03-23",
+      "weekEnd": "2026-03-23",
+      "streams": [
+        "recycling"
+      ],
+      "status": "scheduled",
+      "source": "halifax-live"
+    },
+    {
+      "id": "event_2026_03_30",
+      "date": "2026-03-30",
+      "weekStart": "2026-03-23",
+      "weekEnd": "2026-03-30",
+      "streams": [
+        "garbage"
+      ],
+      "status": "scheduled",
+      "source": "halifax-live"
+    },
+    {
+      "id": "event_2026_04_06",
+      "date": "2026-04-06",
+      "weekStart": "2026-04-06",
+      "weekEnd": "2026-04-06",
+      "streams": [
+        "recycling"
+      ],
+      "status": "scheduled",
+      "source": "halifax-live"
+    },
+    {
+      "id": "event_2026_04_13",
+      "date": "2026-04-13",
+      "weekStart": "2026-04-06",
+      "weekEnd": "2026-04-13",
+      "streams": [
+        "garbage"
+      ],
+      "status": "scheduled",
+      "source": "halifax-live"
+    },
+    {
+      "id": "event_2026_04_20",
+      "date": "2026-04-20",
+      "weekStart": "2026-04-20",
+      "weekEnd": "2026-04-20",
+      "streams": [
+        "recycling"
+      ],
+      "status": "scheduled",
+      "source": "halifax-live"
+    },
+    {
+      "id": "event_2026_04_27",
+      "date": "2026-04-27",
+      "weekStart": "2026-04-20",
+      "weekEnd": "2026-04-27",
+      "streams": [
+        "garbage"
+      ],
+      "status": "scheduled",
+      "source": "halifax-live"
+    },
+    {
+      "id": "event_2026_05_04",
+      "date": "2026-05-04",
+      "weekStart": "2026-05-04",
+      "weekEnd": "2026-05-04",
+      "streams": [
+        "recycling"
+      ],
+      "status": "scheduled",
+      "source": "halifax-live"
+    },
+    {
+      "id": "event_2026_05_11",
+      "date": "2026-05-11",
+      "weekStart": "2026-05-04",
+      "weekEnd": "2026-05-11",
+      "streams": [
+        "garbage"
+      ],
+      "status": "scheduled",
+      "source": "halifax-live"
+    },
+    {
+      "id": "event_2026_05_16",
+      "date": "2026-05-16",
+      "weekStart": "2026-05-16",
+      "weekEnd": "2026-05-16",
+      "streams": [
+        "recycling"
+      ],
+      "status": "scheduled",
+      "source": "halifax-live"
+    },
+    {
+      "id": "event_2026_05_25",
+      "date": "2026-05-25",
+      "weekStart": "2026-05-16",
+      "weekEnd": "2026-05-25",
+      "streams": [
+        "garbage"
+      ],
+      "status": "scheduled",
+      "source": "halifax-live"
+    },
+    {
+      "id": "event_2026_06_01",
+      "date": "2026-06-01",
+      "weekStart": "2026-06-01",
+      "weekEnd": "2026-06-01",
+      "streams": [
+        "recycling"
+      ],
+      "status": "scheduled",
+      "source": "halifax-live"
+    },
+    {
+      "id": "event_2026_06_08",
+      "date": "2026-06-08",
+      "weekStart": "2026-06-01",
+      "weekEnd": "2026-06-08",
+      "streams": [
+        "garbage"
+      ],
+      "status": "scheduled",
+      "source": "halifax-live"
+    },
+    {
+      "id": "event_2026_06_15",
+      "date": "2026-06-15",
+      "weekStart": "2026-06-15",
+      "weekEnd": "2026-06-15",
+      "streams": [
+        "recycling"
+      ],
+      "status": "scheduled",
+      "source": "halifax-live"
+    },
+    {
+      "id": "event_2026_06_22",
+      "date": "2026-06-22",
+      "weekStart": "2026-06-15",
+      "weekEnd": "2026-06-22",
+      "streams": [
+        "garbage"
+      ],
+      "status": "scheduled",
+      "source": "halifax-live"
+    },
+    {
+      "id": "event_2026_06_29",
+      "date": "2026-06-29",
+      "weekStart": "2026-06-29",
+      "weekEnd": "2026-06-29",
+      "streams": [
+        "recycling"
+      ],
+      "status": "scheduled",
+      "source": "halifax-live"
+    },
+    {
+      "id": "event_2026_07_06",
+      "date": "2026-07-06",
+      "weekStart": "2026-06-29",
+      "weekEnd": "2026-07-06",
+      "streams": [
+        "garbage"
+      ],
+      "status": "scheduled",
+      "source": "halifax-live"
+    }
+  ],
+  "assignments": [
+    {
+      "id": "assignment_2026_03_02",
+      "collectionEventId": "event_2026_03_09",
+      "assigneeId": "housemate_6",
+      "weekStart": "2026-03-02",
+      "weekEnd": "2026-03-09",
+      "primaryReminderSentAt": "2026-03-02T16:00:00.000Z",
+      "completionCheckSentAt": "2026-03-09T15:00:00.000Z",
+      "completionConfirmedAt": "2026-03-09T16:00:00.000Z",
+      "completionStatus": "completed",
+      "actualPerformerId": "housemate_7",
+      "reassignedToNextPerson": true,
+      "carryOverToNextWeek": true,
+      "status": "completed",
+      "createdAt": "2026-03-02T16:00:00.000Z"
+    },
+    {
+      "id": "assignment_2026_03_09",
+      "collectionEventId": "event_2026_03_16",
+      "assigneeId": "housemate_6",
+      "weekStart": "2026-03-09",
+      "weekEnd": "2026-03-16",
+      "status": "assigned",
+      "createdAt": "2026-03-09T16:00:00.000Z",
+      "primaryReminderSentAt": "2026-03-09T16:00:00.000Z",
+      "completionStatus": "pending"
+    }
+  ],
+  "rotation": {
+    "lastAssignedHousemateId": "housemate_6",
+    "skipOnceHousemateIds": [
+      "housemate_7"
+    ]
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "name": "garbage-duty-assigner",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "start": "node --enable-source-maps dist/server.js",
+    "build": "tsc -p tsconfig.json",
+    "check": "tsc --noEmit -p tsconfig.json",
+    "seed": "tsx src/scripts/seed.ts",
+    "sync:schedule": "tsx src/scripts/syncSchedule.ts",
+    "run:weekly": "tsx src/scripts/runWeeklyDuty.ts",
+    "run:completion-check": "tsx src/scripts/sendCompletionCheck.ts",
+    "resend:weekly": "tsx src/scripts/resendWeeklyReminder.ts",
+    "test:telegram": "tsx src/scripts/testTelegram.ts",
+    "debug:halifax": "tsx src/scripts/debugHalifaxSchedule.ts"
+  },
+  "dependencies": {
+    "fastify": "^5.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.8.2"
+  }
+}

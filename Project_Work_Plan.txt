@@ -1,0 +1,166 @@
+Garbage Duty Assigner - Project Work Plan
+=========================================
+
+1. Project Goal
+Build a household waste-duty system for a Halifax home that:
+- reads the official waste-collection schedule for the house address
+- maintains a rotating list of housemates and room activity status
+- assigns one active person to own waste duty for the full week
+- sends a Telegram notification to a fixed configured Telegram chat at the start of that person’s duty week for development
+- optionally sends a backup reminder before collection day
+
+The weekly-duty model is the main rule:
+- the assigned person is responsible for the entire week
+- their duty starts as soon as the previous person’s duty ends
+- they manage liners/covers, collect filled bags, and handle curb placement
+- inactive rooms or unavailable people are skipped in the rotation
+
+
+2. Scope for MVP
+- address-based collection schedule ingestion
+- support for garbage, recycling, and organics
+- active/inactive roommate tracking
+- fair round-robin weekly assignment
+- Telegram reminder to a fixed chat at duty-week start
+- optional pre-collection reminder
+- simple API and file-based storage for fast setup
+
+Not in MVP:
+- polished frontend
+- authentication
+- multi-house support
+- advanced analytics
+
+
+3. Recommended Architecture
+Backend stack:
+- Node.js
+- TypeScript
+- Fastify or a lightweight HTTP API
+- JSON/file persistence for MVP, replaceable with SQLite/Postgres later
+
+Main modules:
+- schedule provider
+  - abstracts Halifax/HfxRecycles schedule ingestion
+  - starts with a local-file/mock provider
+  - supports a Halifax import-file workflow
+  - can later be replaced by an official-feed/API integration
+- roster service
+  - stores roommates, rooms, active flags, and rotation order
+- assignment service
+  - creates one duty assignment per service week
+  - skips inactive rooms
+  - tracks current and next assignee
+- notification service
+  - sends weekly-duty Telegram message during development to a fixed chat or group
+  - can send a backup reminder before pickup
+- admin/API layer
+  - manage housemates and rooms
+  - inspect schedule and assignments
+  - trigger sync and reminder jobs manually
+
+
+4. Weekly Duty Rules
+- one person is assigned per service week
+- the assigned person owns all waste tasks for the whole week
+- assignment is based on the next collection week from Halifax schedule data
+- if the official pickup date shifts because of weather or holiday, the assignee does not change
+- organics are attached to garbage weeks when the schedule says they apply
+- inactive or vacant rooms are skipped automatically
+
+Notification timing:
+- primary message: at the start of the duty week
+- backup message: optional, sent the evening before pickup
+
+
+5. Data Model
+Housemate
+- id
+- name
+- roomNumber
+- whatsappNumber
+- isActive
+- notes
+
+Room
+- id
+- label
+- isActive
+- occupantId
+
+CollectionEvent
+- id
+- date
+- weekStart
+- weekEnd
+- streams (garbage/recycling/organics)
+- status (scheduled/delayed/cancelled)
+- source
+
+Assignment
+- id
+- collectionEventId
+- assigneeId
+- weekStart
+- weekEnd
+- primaryReminderSentAt
+- backupReminderSentAt
+- status
+
+
+6. Workflow
+1. Load the next upcoming collection event for the configured Halifax address.
+2. Compute the duty week boundaries.
+3. Pick the next active roommate in round-robin order.
+4. Persist the assignment.
+5. Send a Telegram notification to the configured fixed Telegram chat at duty-week start.
+6. Optionally send a backup reminder shortly before collection day.
+7. Advance the rotation after that week closes.
+
+
+7. Implementation Milestones
+Milestone 1
+- create project scaffold
+- define domain types
+- create file-based persistence
+
+Milestone 2
+- implement roster management
+- implement round-robin assignment logic
+- seed sample household and schedule data
+
+Milestone 3
+- implement schedule provider abstraction
+- support local/mock schedule source first
+- prepare Halifax integration surface
+
+Milestone 4
+- implement Telegram notification abstraction
+- provide console logger notifier for development
+
+Milestone 5
+- expose REST API for housemates, schedule, assignments, and jobs
+- add setup and run instructions
+
+
+8. Operational Notes
+- official Halifax schedule data must be treated as source of truth
+- do not hardcode an alternating Monday-only pattern
+- the system should support manual overrides when Halifax changes collection timing
+- file storage is acceptable for MVP because there is only one household
+- until a stable official endpoint is confirmed, use imported Halifax schedule data in `halifax` mode
+- production version should move to a database and a real message provider
+
+
+9. Immediate Next Build Tasks
+- scaffold the TypeScript backend
+- add mock Halifax schedule provider
+- add weekly assignment generator
+- add weekly reminder message formatting
+- add endpoints for roster and assignments
+- document environment variables and Halifax/Telegram integration steps
+
+
+
+
+Telegram / Email - Can be made completely free

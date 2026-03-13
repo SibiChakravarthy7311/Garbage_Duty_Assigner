@@ -1,0 +1,20 @@
+[
+  {
+    "id": "event_2026_03_16",
+    "date": "2026-03-16",
+    "weekStart": "2026-03-09",
+    "weekEnd": "2026-03-16",
+    "streams": ["garbage", "organics"],
+    "status": "scheduled",
+    "source": "halifax-import"
+  },
+  {
+    "id": "event_2026_03_23",
+    "date": "2026-03-23",
+    "weekStart": "2026-03-16",
+    "weekEnd": "2026-03-23",
+    "streams": ["recycling"],
+    "status": "scheduled",
+    "source": "halifax-import"
+  }
+]
