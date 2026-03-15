@@ -87,6 +87,88 @@ cmd /c rmdir /s /q node_modules
 cmd /c npm install
 ```
 
+## Free Hosting on Cloudflare
+
+This repo now includes a Cloudflare Worker + D1 deployment path so the app can stay online for free without your PC running continuously.
+
+### Architecture
+
+- `src/worker.ts` serves the admin page and API
+- `src/data/d1Store.ts` stores app state in Cloudflare D1
+- `wrangler.toml` configures the Worker, D1 binding, and cron triggers
+- `migrations/0001_init.sql` creates the D1 table
+
+### Recommended mode
+
+Use `SCHEDULE_SOURCE=halifax` for hosted deployments. In the Worker runtime, `file` mode only uses the built-in sample schedule.
+
+### Deploy steps
+
+1. Push the repo to GitHub.
+2. Create a free Cloudflare account.
+3. Install Wrangler locally:
+
+```bash
+cmd /c npm install -D wrangler
+```
+
+4. Create the D1 database:
+
+```bash
+cmd /c npx wrangler d1 create garbage-duty-assigner
+```
+
+5. Copy the returned `database_id` into `wrangler.toml`.
+6. Apply the migration remotely:
+
+```bash
+cmd /c npx wrangler d1 migrations apply garbage-duty-assigner --remote
+```
+
+7. If you want to keep your current local housemates and assignment history, export the existing file-based state and import it into D1:
+
+```bash
+cmd /c npm run export:d1-seed
+cmd /c npx wrangler d1 execute garbage-duty-assigner --remote --file=d1-seed.sql
+```
+
+8. Set the required secrets:
+
+```bash
+cmd /c npx wrangler secret put HOUSE_ADDRESS
+cmd /c npx wrangler secret put ADMIN_USERNAME
+cmd /c npx wrangler secret put ADMIN_PASSWORD
+cmd /c npx wrangler secret put APP_BASE_URL
+cmd /c npx wrangler secret put HALIFAX_PLACE_ID
+```
+
+9. Set optional secrets when needed:
+
+```bash
+cmd /c npx wrangler secret put TELEGRAM_BOT_TOKEN
+cmd /c npx wrangler secret put TELEGRAM_CHAT_ID
+```
+
+10. Deploy:
+
+```bash
+cmd /c npx wrangler deploy
+```
+
+11. Verify:
+   - `/health`
+   - `/admin`
+
+### Default Worker schedule
+
+The Worker runs on Cloudflare cron at `14:05`, `15:05`, `16:05`, and `17:05` UTC every day. That intentionally spans Halifax DST changes while the app logic decides whether reminders are actually due.
+
+### Local Worker development
+
+```bash
+cmd /c npx wrangler dev
+```
+
 ## Hosting on Render
 
 This repo includes a `render.yaml` Blueprint for deploying the app as a Render web service with a persistent disk.

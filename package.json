@@ -17,7 +17,8 @@
     "run:completion-check": "tsx src/scripts/sendCompletionCheck.ts",
     "resend:weekly": "tsx src/scripts/resendWeeklyReminder.ts",
     "test:telegram": "tsx src/scripts/testTelegram.ts",
-    "debug:halifax": "tsx src/scripts/debugHalifaxSchedule.ts"
+    "debug:halifax": "tsx src/scripts/debugHalifaxSchedule.ts",
+    "export:d1-seed": "tsx src/scripts/exportD1Seed.ts"
   },
   "dependencies": {
     "fastify": "^5.3.0"
