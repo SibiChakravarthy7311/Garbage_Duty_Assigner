@@ -106,53 +106,53 @@ Use `SCHEDULE_SOURCE=halifax` for hosted deployments. In the Worker runtime, `fi
 
 1. Push the repo to GitHub.
 2. Create a free Cloudflare account.
-3. Install Wrangler locally:
+3. Use Wrangler on demand with `npx` so it does not become a project dependency:
 
 ```bash
-cmd /c npm install -D wrangler
+cmd /c npx wrangler@latest --version
 ```
 
 4. Create the D1 database:
 
 ```bash
-cmd /c npx wrangler d1 create garbage-duty-assigner
+cmd /c npx wrangler@latest d1 create garbage-duty-assigner
 ```
 
 5. Copy the returned `database_id` into `wrangler.toml`.
 6. Apply the migration remotely:
 
 ```bash
-cmd /c npx wrangler d1 migrations apply garbage-duty-assigner --remote
+cmd /c npx wrangler@latest d1 migrations apply garbage-duty-assigner --remote
 ```
 
 7. If you want to keep your current local housemates and assignment history, export the existing file-based state and import it into D1:
 
 ```bash
 cmd /c npm run export:d1-seed
-cmd /c npx wrangler d1 execute garbage-duty-assigner --remote --file=d1-seed.sql
+cmd /c npx wrangler@latest d1 execute garbage-duty-assigner --remote --file=d1-seed.sql
 ```
 
 8. Set the required secrets:
 
 ```bash
-cmd /c npx wrangler secret put HOUSE_ADDRESS
-cmd /c npx wrangler secret put ADMIN_USERNAME
-cmd /c npx wrangler secret put ADMIN_PASSWORD
-cmd /c npx wrangler secret put APP_BASE_URL
-cmd /c npx wrangler secret put HALIFAX_PLACE_ID
+cmd /c npx wrangler@latest secret put HOUSE_ADDRESS
+cmd /c npx wrangler@latest secret put ADMIN_USERNAME
+cmd /c npx wrangler@latest secret put ADMIN_PASSWORD
+cmd /c npx wrangler@latest secret put APP_BASE_URL
+cmd /c npx wrangler@latest secret put HALIFAX_PLACE_ID
 ```
 
 9. Set optional secrets when needed:
 
 ```bash
-cmd /c npx wrangler secret put TELEGRAM_BOT_TOKEN
-cmd /c npx wrangler secret put TELEGRAM_CHAT_ID
+cmd /c npx wrangler@latest secret put TELEGRAM_BOT_TOKEN
+cmd /c npx wrangler@latest secret put TELEGRAM_CHAT_ID
 ```
 
 10. Deploy:
 
 ```bash
-cmd /c npx wrangler deploy
+cmd /c npx wrangler@latest deploy
 ```
 
 11. Verify:
@@ -166,7 +166,7 @@ The Worker runs on Cloudflare cron at `14:05`, `15:05`, `16:05`, and `17:05` UTC
 ### Local Worker development
 
 ```bash
-cmd /c npx wrangler dev
+cmd /c npx wrangler@latest dev
 ```
 
 ## Hosting on Render
