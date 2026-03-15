@@ -70,7 +70,7 @@ export function formatWeeklyDutyMessage(notification: WeeklyDutyNotification): s
   return [
     "Waste Duty Reminder",
     "",
-    `This week's waste duty is ${notification.assignee.name} (Room ${notification.assignee.roomNumber}).`,
+    `This week's waste duty is ${notification.assignee.name}.`,
     "",
     `Duty window: ${formatDate(notification.assignment.weekStart, false)} to ${formatDate(notification.assignment.weekEnd, false)}`,
     `Collection day: ${formatDate(notification.collectionEvent.date, true)}`,
