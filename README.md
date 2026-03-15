@@ -87,6 +87,42 @@ cmd /c rmdir /s /q node_modules
 cmd /c npm install
 ```
 
+## Hosting on Render
+
+This repo includes a `render.yaml` Blueprint for deploying the app as a Render web service with a persistent disk.
+
+### Deploy steps
+
+1. Push your latest code to GitHub.
+2. In Render, click `New` -> `Blueprint`.
+3. Connect this repository and select the `main` branch.
+4. Render will create the web service from `render.yaml`.
+5. Set values for:
+   - `HOUSE_ADDRESS`
+   - `ADMIN_USERNAME`
+   - `ADMIN_PASSWORD`
+   - `TELEGRAM_BOT_TOKEN` if using Telegram notifications
+   - `TELEGRAM_CHAT_ID` if using Telegram notifications
+   - `HALIFAX_PLACE_ID` if using live Halifax schedule sync
+6. After deployment, verify:
+   - `/health` returns OK
+   - `/admin` loads
+
+### Render settings
+
+- build command: `npm install && npm run build`
+- start command: `npm start`
+- health check path: `/health`
+- persistent disk mount: `/opt/render/project/src/data`
+- state file path: `./data/state.json`
+- import fallback file: `./data/halifaxImport.json`
+
+### Environment notes
+
+- The app supports Render's `PORT` environment variable automatically.
+- `APP_BASE_URL` is optional on Render because the app falls back to `RENDER_EXTERNAL_URL`.
+- `SCHEDULE_SOURCE=file` is the default in `render.yaml`. Change it to `halifax` and set `HALIFAX_PLACE_ID` if you want live Halifax data.
+
 ## API
 
 - `GET /health`

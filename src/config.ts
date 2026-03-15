@@ -48,13 +48,15 @@ export interface RuntimeConfig {
 export function loadConfig(): RuntimeConfig {
   loadEnvFile();
   const scheduleSource = process.env.SCHEDULE_SOURCE === "halifax" ? "halifax" : "file";
+  const port = Number(process.env.PORT ?? process.env.APP_PORT ?? "3000");
+  const appBaseUrl = process.env.APP_BASE_URL ?? process.env.RENDER_EXTERNAL_URL ?? `http://localhost:${port}`;
 
   return {
-    port: Number(process.env.APP_PORT ?? "3000"),
+    port,
     stateFile: path.resolve(process.cwd(), process.env.STATE_FILE ?? "./data/state.json"),
     appTimezone: process.env.APP_TIMEZONE ?? "America/Halifax",
     houseAddress: process.env.HOUSE_ADDRESS ?? "Halifax, NS",
-    appBaseUrl: process.env.APP_BASE_URL ?? "http://localhost:3000",
+    appBaseUrl,
     scheduleSource,
     adminUsername: process.env.ADMIN_USERNAME ?? "admin",
     adminPassword: process.env.ADMIN_PASSWORD ?? "changeme",
