@@ -1,54 +1,92 @@
-import type { WeeklyDutyNotification } from "../domain/types.js";
+import type { WeeklyDutyNotification, WasteStream } from "../domain/types.js";
 
-function normalizePhoneNumber(phoneNumber?: string): string | undefined {
-  if (!phoneNumber) {
-    return undefined;
-  }
-
-  const normalized = phoneNumber.replace(/[^\d+]/g, "");
-  return normalized.length > 0 ? normalized : undefined;
+function parseIsoDate(date: string): Date {
+  return new Date(`${date}T00:00:00Z`);
 }
 
-function buildWhatsappLink(phoneNumber?: string): string | undefined {
-  const normalized = normalizePhoneNumber(phoneNumber);
-  if (!normalized) {
-    return undefined;
+function formatDate(date: string, includeWeekday: boolean): string {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "UTC",
+    weekday: includeWeekday ? "long" : undefined,
+    month: "long",
+    day: "numeric",
+    year: "numeric"
+  }).format(parseIsoDate(date));
+}
+
+function titleCaseStream(stream: WasteStream): string {
+  switch (stream) {
+    case "garbage":
+      return "Garbage";
+    case "recycling":
+      return "Recycling";
+    case "organics":
+      return "Organics";
+  }
+}
+
+function joinNaturally(values: string[]): string {
+  if (values.length === 1) {
+    return values[0] ?? "";
   }
 
-  const digitsOnly = normalized.replace(/\D/g, "");
-  return digitsOnly ? `https://wa.me/${digitsOnly}` : undefined;
+  if (values.length === 2) {
+    return `${values[0]} and ${values[1]}`;
+  }
+
+  return `${values.slice(0, -1).join(", ")}, and ${values[values.length - 1]}`;
+}
+
+function formatStreamLabel(streams: WasteStream[]): string {
+  return joinNaturally(streams.map(titleCaseStream));
+}
+
+function buildChecklist(streams: WasteStream[]): string[] {
+  const uniqueStreams = Array.from(new Set(streams));
+  const bullets: string[] = ["replace liners where needed"];
+
+  if (uniqueStreams.includes("garbage")) {
+    bullets.push("collect and tie filled garbage bags from common areas");
+  }
+
+  if (uniqueStreams.includes("recycling")) {
+    bullets.push("collect and sort recyclable materials properly");
+  }
+
+  if (uniqueStreams.includes("organics")) {
+    bullets.push("empty and secure organics bags or bins");
+  }
+
+  bullets.push("tidy and organize the waste storage area");
+  bullets.push(`place ${formatStreamLabel(uniqueStreams).toLowerCase()} out for pickup before 8:00 a.m.`);
+
+  return bullets;
 }
 
 export function formatWeeklyDutyMessage(notification: WeeklyDutyNotification): string {
-  const streams = notification.collectionEvent.streams.join(", ");
-  const phoneLine = notification.assignee.whatsappNumber
-    ? `Phone: ${notification.assignee.whatsappNumber}.`
-    : "Phone: not available.";
-  const whatsappLink = buildWhatsappLink(notification.assignee.whatsappNumber);
-  const adminLine = notification.adminUrl ? `Admin: ${notification.adminUrl}.` : undefined;
+  const streamLabel = formatStreamLabel(notification.collectionEvent.streams);
+  const checklist = buildChecklist(notification.collectionEvent.streams);
 
   return [
-    `Waste duty this week: ${notification.assignee.name}.`,
-    `Room: ${notification.assignee.roomNumber}.`,
-    `Duty window: ${notification.assignment.weekStart} to ${notification.assignment.weekEnd}.`,
-    `Collection date: ${notification.collectionEvent.date}.`,
-    `Collection streams: ${streams}.`,
-    phoneLine,
-    whatsappLink ? `WhatsApp: ${whatsappLink}.` : "WhatsApp: not available.",
-    adminLine,
-    "Please manage liners, collect filled bags, organize storage, and place materials out on collection day."
-  ].filter(Boolean).join(" ");
+    "Waste Duty Reminder",
+    "",
+    `This week's waste duty is ${notification.assignee.name} (Room ${notification.assignee.roomNumber}).`,
+    "",
+    `Duty window: ${formatDate(notification.assignment.weekStart, false)} to ${formatDate(notification.assignment.weekEnd, false)}`,
+    `Collection day: ${formatDate(notification.collectionEvent.date, true)}`,
+    `Pickup this week: ${streamLabel}`,
+    "",
+    "Please make sure the following is taken care of before collection:",
+    ...checklist.map((item) => `- ${item}`),
+    "",
+    "If helpful, put everything out the night before so it is ready on time.",
+    "",
+    "Thanks for handling it."
+  ].join("\n");
 }
 
 export function formatBackupReminderMessage(notification: WeeklyDutyNotification): string {
-  const streams = notification.collectionEvent.streams.join(", ");
-  const whatsappLink = buildWhatsappLink(notification.assignee.whatsappNumber);
-  return [
-    `Reminder: ${notification.assignee.name} is on duty this week.`,
-    `Collection is on ${notification.collectionEvent.date} for ${streams}.`,
-    notification.assignee.whatsappNumber ? `Phone: ${notification.assignee.whatsappNumber}.` : "Phone: not available.",
-    whatsappLink ? `WhatsApp: ${whatsappLink}.` : "WhatsApp: not available."
-  ].join(" ");
+  return formatWeeklyDutyMessage(notification);
 }
 
 export function formatCompletionCheckMessage(notification: WeeklyDutyNotification): string {

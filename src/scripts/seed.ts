@@ -12,58 +12,66 @@ async function main(): Promise<void> {
   state.housemates = [
     {
       id: createId("housemate"),
-      name: "Roommate 1",
+      name: "Mandeep",
       roomNumber: "1",
-      whatsappNumber: "+19025550001",
-      isActive: true
+      isActive: true,
+      notes: "Newly moved in"
     },
     {
       id: createId("housemate"),
-      name: "Roommate 2",
-      roomNumber: "2",
-      whatsappNumber: "+19025550002",
-      isActive: true
-    },
-    {
-      id: createId("housemate"),
-      name: "Roommate 3",
+      name: "Sibi",
       roomNumber: "3",
-      whatsappNumber: "+19025550003",
+      whatsappNumber: "+17828826094",
       isActive: true
     },
     {
       id: createId("housemate"),
-      name: "Roommate 4",
+      name: "Hariesh",
+      roomNumber: "2",
+      whatsappNumber: "+17828826857",
+      isActive: true
+    },
+    {
+      id: createId("housemate"),
+      name: "Venkatraman",
       roomNumber: "4",
-      whatsappNumber: "+19025550004",
+      whatsappNumber: "+17828825419",
       isActive: true
     },
     {
       id: createId("housemate"),
-      name: "Roommate 5",
+      name: "Kabilesh",
       roomNumber: "5",
-      whatsappNumber: "+19025550005",
+      whatsappNumber: "+17828828843",
       isActive: true
     },
     {
       id: createId("housemate"),
-      name: "Vacant Room",
+      name: "Ishita",
       roomNumber: "6",
-      whatsappNumber: "+19025550006",
-      isActive: false,
-      notes: "Vacant"
+      whatsappNumber: "+12268835757",
+      isActive: true
+    },
+    {
+      id: createId("housemate"),
+      name: "Gowri",
+      roomNumber: "7",
+      whatsappNumber: "+17828825663",
+      isActive: true
     }
   ];
 
   state.rooms = [
     { id: createId("room"), label: "Room 1", isActive: true, occupantId: state.housemates[0]?.id },
-    { id: createId("room"), label: "Room 2", isActive: true, occupantId: state.housemates[1]?.id },
-    { id: createId("room"), label: "Room 3", isActive: true, occupantId: state.housemates[2]?.id },
+    { id: createId("room"), label: "Room 2", isActive: true, occupantId: state.housemates[2]?.id },
+    { id: createId("room"), label: "Room 3", isActive: true, occupantId: state.housemates[1]?.id },
     { id: createId("room"), label: "Room 4", isActive: true, occupantId: state.housemates[3]?.id },
     { id: createId("room"), label: "Room 5", isActive: true, occupantId: state.housemates[4]?.id },
-    { id: createId("room"), label: "Room 6", isActive: false, occupantId: state.housemates[5]?.id },
-    { id: createId("room"), label: "Room 7", isActive: false }
+    { id: createId("room"), label: "Room 6", isActive: true, occupantId: state.housemates[5]?.id },
+    { id: createId("room"), label: "Room 7", isActive: true, occupantId: state.housemates[6]?.id }
   ];
+
+  state.rotation.skipOnceHousemateIds = [state.housemates[0].id];
 
   await store.save(state);
   console.log(`Seeded state file at ${config.stateFile}`);

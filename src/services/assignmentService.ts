@@ -2,7 +2,17 @@ import { createId } from "../lib/id.js";
 import { nowIso, todayIsoDate } from "../lib/time.js";
 import { getZonedDateTimeParts } from "../lib/zonedDateTime.js";
 import type { AppState, Assignment, CollectionEvent, Housemate, Room } from "../domain/types.js";
+import { normalizeCollectionEvents } from "./collectionEventUtils.js";
 import { RotationService } from "./rotationService.js";
+
+export interface NextAssignmentPreview {
+  assigneeId: string;
+  collectionEventId: string;
+  weekStart: string;
+  weekEnd: string;
+  selectionMode: "forced" | "rotation";
+  skippedHousemateIds: string[];
+}
 
 export class AssignmentService {
   constructor(private readonly rotationService: RotationService) {}
@@ -29,12 +39,58 @@ export class AssignmentService {
 
     return {
       ...state,
-      collectionEvents: [...eventById.values()].sort((left, right) => left.date.localeCompare(right.date))
+      collectionEvents: normalizeCollectionEvents([...eventById.values()])
     };
   }
 
   getActiveAssignment(state: AppState, today = todayIsoDate()): Assignment | undefined {
     return state.assignments.find((assignment) => assignment.weekStart <= today && assignment.weekEnd >= today);
+  }
+
+  previewNextAssignment(state: AppState, today = todayIsoDate()): NextAssignmentPreview | undefined {
+    const eligibleHousemates = state.housemates.filter((housemate) => this.isHousemateEligible(housemate, state.rooms));
+    if (eligibleHousemates.length === 0) {
+      return undefined;
+    }
+
+    const activeAssignment = this.getActiveAssignment(state, today);
+    const referenceWeekStart = activeAssignment?.weekStart ?? today;
+    const nextEvent = state.collectionEvents.find(
+      (event) => event.status !== "cancelled" && event.weekStart > referenceWeekStart
+    );
+    if (!nextEvent) {
+      return undefined;
+    }
+
+    const forcedAssignee = state.rotation.nextForcedHousemateId
+      ? eligibleHousemates.find((housemate) => housemate.id === state.rotation.nextForcedHousemateId)
+      : undefined;
+
+    if (forcedAssignee) {
+      return {
+        assigneeId: forcedAssignee.id,
+        collectionEventId: nextEvent.id,
+        weekStart: nextEvent.weekStart,
+        weekEnd: nextEvent.weekEnd,
+        selectionMode: "forced",
+        skippedHousemateIds: []
+      };
+    }
+
+    const rotationResult = this.rotationService.getNextAssignee(
+      eligibleHousemates,
+      activeAssignment?.assigneeId ?? state.rotation.lastAssignedHousemateId,
+      state.rotation.skipOnceHousemateIds ?? []
+    );
+
+    return {
+      assigneeId: rotationResult.assignee.id,
+      collectionEventId: nextEvent.id,
+      weekStart: nextEvent.weekStart,
+      weekEnd: nextEvent.weekEnd,
+      selectionMode: "rotation",
+      skippedHousemateIds: rotationResult.consumedSkipIds
+    };
   }
 
   assignCurrentWeek(state: AppState, today = todayIsoDate()): { state: AppState; assignment?: Assignment } {

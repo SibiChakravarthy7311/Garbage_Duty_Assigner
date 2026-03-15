@@ -9,6 +9,7 @@ import { HalifaxScheduleProvider } from "./services/halifaxScheduleProvider.js";
 import { HousemateService } from "./services/housemateService.js";
 import { RotationService } from "./services/rotationService.js";
 import { TelegramNotificationService } from "./services/telegramNotificationService.js";
+import { adminCredentialsMatch, clearAdminSession, isAdminAuthenticated, setAdminSession } from "./lib/adminAuth.js";
 import { getZonedDateTimeParts } from "./lib/zonedDateTime.js";
 import { renderAdminPage } from "./ui/adminPage.js";
 import type { CreateHousemateInput } from "./services/housemateService.js";
@@ -34,9 +35,52 @@ export async function buildApp() {
       ? new TelegramNotificationService(config.telegramBotToken, config.telegramChatId)
       : new ConsoleNotificationService();
 
+  function requireAdmin(request: Parameters<typeof isAdminAuthenticated>[0], reply: Fastify.FastifyReply): boolean {
+    if (isAdminAuthenticated(request, config)) {
+      return true;
+    }
+
+    reply.status(403).send({ error: "Admin access required." });
+    return false;
+  }
+
   app.get("/health", async () => ({ ok: true }));
   app.get("/", async (_, reply) => reply.type("text/html").send(renderAdminPage()));
   app.get("/admin", async (_, reply) => reply.type("text/html").send(renderAdminPage()));
+
+  app.get("/api/admin/session", async (request) => ({
+    isAdmin: isAdminAuthenticated(request, config),
+    username: config.adminUsername
+  }));
+
+  app.post("/api/admin/login", async (request, reply) => {
+    const input = request.body as { username?: string; password?: string };
+    if (!adminCredentialsMatch(input.username, input.password, config)) {
+      clearAdminSession(reply);
+      return reply.status(401).send({ error: "Invalid admin credentials." });
+    }
+
+    setAdminSession(reply, config);
+    return { ok: true, username: config.adminUsername };
+  });
+
+  app.post("/api/admin/logout", async (_, reply) => {
+    clearAdminSession(reply);
+    return { ok: true };
+  });
+
+  app.get("/api/dashboard", async (request) => {
+    const state = await store.load();
+    const today = getZonedDateTimeParts(config.appTimezone).date;
+    return {
+      state,
+      auth: {
+        isAdmin: isAdminAuthenticated(request, config),
+        username: config.adminUsername
+      },
+      nextAssignmentPreview: assignmentService.previewNextAssignment(state, today) ?? null
+    };
+  });
 
   app.get("/api/state", async () => store.load());
 
@@ -46,6 +90,10 @@ export async function buildApp() {
   });
 
   app.post("/api/housemates", async (request, reply) => {
+    if (!requireAdmin(request, reply)) {
+      return;
+    }
+
     const input = request.body as {
       name?: string;
       roomNumber?: string;
@@ -75,6 +123,10 @@ export async function buildApp() {
   });
 
   app.patch("/api/housemates/:id", async (request, reply) => {
+    if (!requireAdmin(request, reply)) {
+      return;
+    }
+
     const params = request.params as { id: string };
     const input = request.body as {
       name?: string;
@@ -82,15 +134,50 @@ export async function buildApp() {
       whatsappNumber?: string;
       isActive?: boolean;
       notes?: string;
+      skipNextTurn?: boolean;
     };
 
     try {
       const state = await store.load();
       const result = housemateService.update(state, params.id, input);
-      await store.save(result.state);
+      const skipOnceHousemateIds = new Set(result.state.rotation.skipOnceHousemateIds ?? []);
+      if (input.skipNextTurn === true) {
+        skipOnceHousemateIds.add(params.id);
+      } else if (input.skipNextTurn === false) {
+        skipOnceHousemateIds.delete(params.id);
+      }
+
+      const updatedState = {
+        ...result.state,
+        rotation: {
+          ...result.state.rotation,
+          skipOnceHousemateIds: Array.from(skipOnceHousemateIds)
+        }
+      };
+      await store.save(updatedState);
       return result.housemate;
     } catch (error) {
       return reply.status(404).send({ error: (error as Error).message });
+    }
+  });
+
+  app.post("/api/housemates/reorder", async (request, reply) => {
+    if (!requireAdmin(request, reply)) {
+      return;
+    }
+
+    const input = request.body as { orderedIds?: string[] };
+    if (!Array.isArray(input.orderedIds) || input.orderedIds.length === 0) {
+      return reply.status(400).send({ error: "orderedIds must be a non-empty array." });
+    }
+
+    try {
+      const state = await store.load();
+      const result = housemateService.reorder(state, input.orderedIds);
+      await store.save(result.state);
+      return { ok: true, housemates: result.housemates };
+    } catch (error) {
+      return reply.status(400).send({ error: (error as Error).message });
     }
   });
 
@@ -100,6 +187,10 @@ export async function buildApp() {
   });
 
   app.post("/api/assignments/current/reassign-next", async (_, reply) => {
+    if (!requireAdmin(_, reply)) {
+      return;
+    }
+
     try {
       const state = await store.load();
       const today = getZonedDateTimeParts(config.appTimezone).date;
@@ -112,6 +203,10 @@ export async function buildApp() {
   });
 
   app.post("/api/assignments/current/complete", async (_, reply) => {
+    if (!requireAdmin(_, reply)) {
+      return;
+    }
+
     try {
       const state = await store.load();
       const today = getZonedDateTimeParts(config.appTimezone).date;
@@ -124,6 +219,10 @@ export async function buildApp() {
   });
 
   app.post("/api/assignments/current/carry-over", async (_, reply) => {
+    if (!requireAdmin(_, reply)) {
+      return;
+    }
+
     try {
       const state = await store.load();
       const today = getZonedDateTimeParts(config.appTimezone).date;
@@ -148,6 +247,10 @@ export async function buildApp() {
   });
 
   app.post("/api/jobs/run-weekly-duty", async (request, reply) => {
+    if (!requireAdmin(request, reply)) {
+      return;
+    }
+
     try {
       let state = await store.load();
       const today = getZonedDateTimeParts(config.appTimezone).date;
@@ -182,6 +285,10 @@ export async function buildApp() {
   });
 
   app.post("/api/jobs/resend-weekly", async (request, reply) => {
+    if (!requireAdmin(request, reply)) {
+      return;
+    }
+
     try {
       let state = await store.load();
       const today = getZonedDateTimeParts(config.appTimezone).date;
@@ -211,6 +318,10 @@ export async function buildApp() {
   });
 
   app.post("/api/jobs/send-completion-check", async (_, reply) => {
+    if (!requireAdmin(_, reply)) {
+      return;
+    }
+
     try {
       let state = await store.load();
       const today = getZonedDateTimeParts(config.appTimezone).date;

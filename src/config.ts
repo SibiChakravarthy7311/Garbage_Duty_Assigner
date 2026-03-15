@@ -37,6 +37,8 @@ export interface RuntimeConfig {
   houseAddress: string;
   appBaseUrl: string;
   scheduleSource: "file" | "halifax";
+  adminUsername: string;
+  adminPassword: string;
   telegramBotToken?: string;
   telegramChatId?: string;
   halifaxImportFile?: string;
@@ -54,6 +56,8 @@ export function loadConfig(): RuntimeConfig {
     houseAddress: process.env.HOUSE_ADDRESS ?? "Halifax, NS",
     appBaseUrl: process.env.APP_BASE_URL ?? "http://localhost:3000",
     scheduleSource,
+    adminUsername: process.env.ADMIN_USERNAME ?? "admin",
+    adminPassword: process.env.ADMIN_PASSWORD ?? "changeme",
     telegramBotToken: process.env.TELEGRAM_BOT_TOKEN,
     telegramChatId: process.env.TELEGRAM_CHAT_ID,
     halifaxImportFile: process.env.HALIFAX_IMPORT_FILE,

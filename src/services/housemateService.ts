@@ -60,4 +60,32 @@ export class HousemateService {
       }
     };
   }
+
+  reorder(state: AppState, orderedIds: string[]): { state: AppState; housemates: Housemate[] } {
+    if (orderedIds.length !== state.housemates.length) {
+      throw new Error("orderedIds must include every housemate exactly once.");
+    }
+
+    const housemateById = new Map(state.housemates.map((housemate) => [housemate.id, housemate]));
+    const nextHousemates = orderedIds.map((id) => {
+      const housemate = housemateById.get(id);
+      if (!housemate) {
+        throw new Error(`Housemate ${id} not found.`);
+      }
+      housemateById.delete(id);
+      return housemate;
+    });
+
+    if (housemateById.size > 0) {
+      throw new Error("orderedIds must include every housemate exactly once.");
+    }
+
+    return {
+      housemates: nextHousemates,
+      state: {
+        ...state,
+        housemates: nextHousemates
+      }
+    };
+  }
 }

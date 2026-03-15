@@ -6,53 +6,52 @@
   },
   "housemates": [
     {
-      "id": "housemate_1",
-      "name": "Venkatraman",
+      "id": "housemate_4",
+      "name": "Mandeep",
       "roomNumber": "1",
-      "whatsappNumber": "+19025550001",
+      "isActive": true,
+      "notes": "Newly moved in"
+    },
+    {
+      "id": "housemate_3",
+      "name": "Sibi",
+      "roomNumber": "3",
+      "whatsappNumber": "+17828826094",
       "isActive": true
     },
     {
       "id": "housemate_2",
       "name": "Hariesh",
       "roomNumber": "2",
-      "whatsappNumber": "+19025550002",
+      "whatsappNumber": "+17828826857",
       "isActive": true
     },
     {
-      "id": "housemate_3",
-      "name": "Sibi",
-      "roomNumber": "3",
-      "whatsappNumber": "+19025550003",
-      "isActive": true
-    },
-    {
-      "id": "housemate_4",
-      "name": "Nithin",
+      "id": "housemate_1",
+      "name": "Venkatraman",
       "roomNumber": "4",
-      "whatsappNumber": "+19025550004",
-      "isActive": false,
-      "notes": "Vacant"
+      "whatsappNumber": "+17828825419",
+      "isActive": true
     },
     {
       "id": "housemate_5",
       "name": "Kabilesh",
       "roomNumber": "5",
-      "whatsappNumber": "+19025550005",
+      "whatsappNumber": "+17828828843",
       "isActive": true
     },
     {
       "id": "housemate_6",
       "name": "Ishita",
       "roomNumber": "6",
-      "whatsappNumber": "+19025550006",
+      "whatsappNumber": "+12268835757",
       "isActive": true
     },
     {
       "id": "housemate_7",
       "name": "Gowri",
       "roomNumber": "7",
-      "whatsappNumber": "+19025550007d",
+      "whatsappNumber": "+17828825663",
       "isActive": true
     }
   ],
@@ -61,7 +60,7 @@
       "id": "room_1",
       "label": "Room 1",
       "isActive": true,
-      "occupantId": "housemate_1"
+      "occupantId": "housemate_4"
     },
     {
       "id": "room_2",
@@ -78,8 +77,8 @@
     {
       "id": "room_4",
       "label": "Room 4",
-      "isActive": false,
-      "occupantId": "housemate_4"
+      "isActive": true,
+      "occupantId": "housemate_1"
     },
     {
       "id": "room_5",
@@ -104,7 +103,7 @@
     {
       "id": "event_2026_02_09",
       "date": "2026-02-09",
-      "weekStart": "2026-02-09",
+      "weekStart": "2026-02-02",
       "weekEnd": "2026-02-09",
       "streams": [
         "recycling"
@@ -126,7 +125,7 @@
     {
       "id": "event_2026_02_23",
       "date": "2026-02-23",
-      "weekStart": "2026-02-23",
+      "weekStart": "2026-02-14",
       "weekEnd": "2026-02-23",
       "streams": [
         "recycling"
@@ -148,7 +147,7 @@
     {
       "id": "event_2026_03_09",
       "date": "2026-03-09",
-      "weekStart": "2026-03-09",
+      "weekStart": "2026-03-02",
       "weekEnd": "2026-03-09",
       "streams": [
         "recycling"
@@ -170,7 +169,7 @@
     {
       "id": "event_2026_03_23",
       "date": "2026-03-23",
-      "weekStart": "2026-03-23",
+      "weekStart": "2026-03-16",
       "weekEnd": "2026-03-23",
       "streams": [
         "recycling"
@@ -192,7 +191,7 @@
     {
       "id": "event_2026_04_06",
       "date": "2026-04-06",
-      "weekStart": "2026-04-06",
+      "weekStart": "2026-03-30",
       "weekEnd": "2026-04-06",
       "streams": [
         "recycling"
@@ -214,7 +213,7 @@
     {
       "id": "event_2026_04_20",
       "date": "2026-04-20",
-      "weekStart": "2026-04-20",
+      "weekStart": "2026-04-13",
       "weekEnd": "2026-04-20",
       "streams": [
         "recycling"
@@ -236,7 +235,7 @@
     {
       "id": "event_2026_05_04",
       "date": "2026-05-04",
-      "weekStart": "2026-05-04",
+      "weekStart": "2026-04-27",
       "weekEnd": "2026-05-04",
       "streams": [
         "recycling"
@@ -258,7 +257,7 @@
     {
       "id": "event_2026_05_16",
       "date": "2026-05-16",
-      "weekStart": "2026-05-16",
+      "weekStart": "2026-05-11",
       "weekEnd": "2026-05-16",
       "streams": [
         "recycling"
@@ -280,7 +279,7 @@
     {
       "id": "event_2026_06_01",
       "date": "2026-06-01",
-      "weekStart": "2026-06-01",
+      "weekStart": "2026-05-25",
       "weekEnd": "2026-06-01",
       "streams": [
         "recycling"
@@ -302,7 +301,7 @@
     {
       "id": "event_2026_06_15",
       "date": "2026-06-15",
-      "weekStart": "2026-06-15",
+      "weekStart": "2026-06-08",
       "weekEnd": "2026-06-15",
       "streams": [
         "recycling"
@@ -324,7 +323,7 @@
     {
       "id": "event_2026_06_29",
       "date": "2026-06-29",
-      "weekStart": "2026-06-29",
+      "weekStart": "2026-06-22",
       "weekEnd": "2026-06-29",
       "streams": [
         "recycling"
@@ -376,7 +375,8 @@
   "rotation": {
     "lastAssignedHousemateId": "housemate_6",
     "skipOnceHousemateIds": [
-      "housemate_7"
+      "housemate_7",
+      "housemate_4"
     ]
   }
 }

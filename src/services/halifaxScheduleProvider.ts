@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import type { CollectionEvent } from "../domain/types.js";
+import { normalizeCollectionEvents } from "./collectionEventUtils.js";
 import type { ScheduleProvider } from "./scheduleProvider.js";
 
 interface RecollectFlag {
@@ -69,20 +70,20 @@ export class HalifaxScheduleProvider implements ScheduleProvider {
   ) {}
 
   async sync(): Promise<CollectionEvent[]> {
-    if (this.importFile) {
-      const raw = await fs.readFile(path.resolve(process.cwd(), this.importFile), "utf8");
-      const events = JSON.parse(raw) as CollectionEvent[];
-      return events.sort((left, right) => left.date.localeCompare(right.date));
-    }
-
     if (this.placeId) {
       return this.syncFromRecollect();
     }
 
+    if (this.importFile) {
+      const raw = await fs.readFile(path.resolve(process.cwd(), this.importFile), "utf8");
+      const events = JSON.parse(raw) as CollectionEvent[];
+      return normalizeCollectionEvents(events);
+    }
+
     throw new Error(
       `Halifax schedule sync is not fully implemented yet for address "${this.address}". ` +
-        "Use SCHEDULE_SOURCE=halifax together with HALIFAX_IMPORT_FILE=./data/halifaxImport.json for an import-based official-data workflow, " +
-        "or set HALIFAX_PLACE_ID for direct ReCollect event fetch, or keep SCHEDULE_SOURCE=file for the local sample schedule."
+        "Set HALIFAX_PLACE_ID for direct ReCollect event fetch, use HALIFAX_IMPORT_FILE=./data/halifaxImport.json as a fallback import workflow, " +
+        "or keep SCHEDULE_SOURCE=file for the local sample schedule."
     );
   }
 
@@ -135,7 +136,7 @@ export class HalifaxScheduleProvider implements ScheduleProvider {
       .filter((event) => event.streams.length > 0)
       .sort((left, right) => left.day.localeCompare(right.day));
 
-    return pickupDays.map((event, index) => ({
+    return normalizeCollectionEvents(pickupDays.map((event, index) => ({
       id: `event_${event.day.replace(/-/g, "_")}`,
       date: event.day,
       weekStart: index === 0 ? shiftIsoDate(event.day, -7) : pickupDays[index - 1].day,
@@ -143,6 +144,6 @@ export class HalifaxScheduleProvider implements ScheduleProvider {
       streams: event.streams,
       status: "scheduled",
       source: "halifax-live"
-    }));
+    })));
   }
 }

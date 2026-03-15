@@ -1,0 +1,200 @@
+[
+  {
+    "id": "event_2026_02_09",
+    "date": "2026-02-09",
+    "weekStart": "2026-02-02",
+    "weekEnd": "2026-02-09",
+    "streams": ["recycling"],
+    "status": "scheduled",
+    "source": "halifax-live"
+  },
+  {
+    "id": "event_2026_02_14",
+    "date": "2026-02-14",
+    "weekStart": "2026-02-09",
+    "weekEnd": "2026-02-14",
+    "streams": ["garbage"],
+    "status": "scheduled",
+    "source": "halifax-live"
+  },
+  {
+    "id": "event_2026_02_23",
+    "date": "2026-02-23",
+    "weekStart": "2026-02-14",
+    "weekEnd": "2026-02-23",
+    "streams": ["recycling"],
+    "status": "scheduled",
+    "source": "halifax-live"
+  },
+  {
+    "id": "event_2026_03_02",
+    "date": "2026-03-02",
+    "weekStart": "2026-02-23",
+    "weekEnd": "2026-03-02",
+    "streams": ["garbage"],
+    "status": "scheduled",
+    "source": "halifax-live"
+  },
+  {
+    "id": "event_2026_03_09",
+    "date": "2026-03-09",
+    "weekStart": "2026-03-02",
+    "weekEnd": "2026-03-09",
+    "streams": ["recycling"],
+    "status": "scheduled",
+    "source": "halifax-live"
+  },
+  {
+    "id": "event_2026_03_16",
+    "date": "2026-03-16",
+    "weekStart": "2026-03-09",
+    "weekEnd": "2026-03-16",
+    "streams": ["garbage"],
+    "status": "scheduled",
+    "source": "halifax-live"
+  },
+  {
+    "id": "event_2026_03_23",
+    "date": "2026-03-23",
+    "weekStart": "2026-03-16",
+    "weekEnd": "2026-03-23",
+    "streams": ["recycling"],
+    "status": "scheduled",
+    "source": "halifax-live"
+  },
+  {
+    "id": "event_2026_03_30",
+    "date": "2026-03-30",
+    "weekStart": "2026-03-23",
+    "weekEnd": "2026-03-30",
+    "streams": ["garbage"],
+    "status": "scheduled",
+    "source": "halifax-live"
+  },
+  {
+    "id": "event_2026_04_06",
+    "date": "2026-04-06",
+    "weekStart": "2026-03-30",
+    "weekEnd": "2026-04-06",
+    "streams": ["recycling"],
+    "status": "scheduled",
+    "source": "halifax-live"
+  },
+  {
+    "id": "event_2026_04_13",
+    "date": "2026-04-13",
+    "weekStart": "2026-04-06",
+    "weekEnd": "2026-04-13",
+    "streams": ["garbage"],
+    "status": "scheduled",
+    "source": "halifax-live"
+  },
+  {
+    "id": "event_2026_04_20",
+    "date": "2026-04-20",
+    "weekStart": "2026-04-13",
+    "weekEnd": "2026-04-20",
+    "streams": ["recycling"],
+    "status": "scheduled",
+    "source": "halifax-live"
+  },
+  {
+    "id": "event_2026_04_27",
+    "date": "2026-04-27",
+    "weekStart": "2026-04-20",
+    "weekEnd": "2026-04-27",
+    "streams": ["garbage"],
+    "status": "scheduled",
+    "source": "halifax-live"
+  },
+  {
+    "id": "event_2026_05_04",
+    "date": "2026-05-04",
+    "weekStart": "2026-04-27",
+    "weekEnd": "2026-05-04",
+    "streams": ["recycling"],
+    "status": "scheduled",
+    "source": "halifax-live"
+  },
+  {
+    "id": "event_2026_05_11",
+    "date": "2026-05-11",
+    "weekStart": "2026-05-04",
+    "weekEnd": "2026-05-11",
+    "streams": ["garbage"],
+    "status": "scheduled",
+    "source": "halifax-live"
+  },
+  {
+    "id": "event_2026_05_16",
+    "date": "2026-05-16",
+    "weekStart": "2026-05-11",
+    "weekEnd": "2026-05-16",
+    "streams": ["recycling"],
+    "status": "scheduled",
+    "source": "halifax-live"
+  },
+  {
+    "id": "event_2026_05_25",
+    "date": "2026-05-25",
+    "weekStart": "2026-05-16",
+    "weekEnd": "2026-05-25",
+    "streams": ["garbage"],
+    "status": "scheduled",
+    "source": "halifax-live"
+  },
+  {
+    "id": "event_2026_06_01",
+    "date": "2026-06-01",
+    "weekStart": "2026-05-25",
+    "weekEnd": "2026-06-01",
+    "streams": ["recycling"],
+    "status": "scheduled",
+    "source": "halifax-live"
+  },
+  {
+    "id": "event_2026_06_08",
+    "date": "2026-06-08",
+    "weekStart": "2026-06-01",
+    "weekEnd": "2026-06-08",
+    "streams": ["garbage"],
+    "status": "scheduled",
+    "source": "halifax-live"
+  },
+  {
+    "id": "event_2026_06_15",
+    "date": "2026-06-15",
+    "weekStart": "2026-06-08",
+    "weekEnd": "2026-06-15",
+    "streams": ["recycling"],
+    "status": "scheduled",
+    "source": "halifax-live"
+  },
+  {
+    "id": "event_2026_06_22",
+    "date": "2026-06-22",
+    "weekStart": "2026-06-15",
+    "weekEnd": "2026-06-22",
+    "streams": ["garbage"],
+    "status": "scheduled",
+    "source": "halifax-live"
+  },
+  {
+    "id": "event_2026_06_29",
+    "date": "2026-06-29",
+    "weekStart": "2026-06-22",
+    "weekEnd": "2026-06-29",
+    "streams": ["recycling"],
+    "status": "scheduled",
+    "source": "halifax-live"
+  },
+  {
+    "id": "event_2026_07_06",
+    "date": "2026-07-06",
+    "weekStart": "2026-06-29",
+    "weekEnd": "2026-07-06",
+    "streams": ["garbage"],
+    "status": "scheduled",
+    "source": "halifax-live"
+  }
+]
