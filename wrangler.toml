@@ -10,7 +10,7 @@ SCHEDULE_SOURCE = "halifax"
 [[d1_databases]]
 binding = "DB"
 database_name = "garbage-duty-assigner"
-database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+database_id = "1c99f586-ecbc-4938-9be6-5795b595bc86"
 
 [triggers]
 crons = ["5 14,15,16,17 * * *"]
