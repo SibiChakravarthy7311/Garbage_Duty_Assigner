@@ -11,6 +11,7 @@ import {
 import { AssignmentService } from "./services/assignmentService.js";
 import { ConsoleNotificationService } from "./services/consoleNotificationService.js";
 import { HousemateService, type CreateHousemateInput } from "./services/housemateService.js";
+import { runDailyMaintenance } from "./services/maintenanceService.js";
 import type { NotificationService } from "./services/notificationService.js";
 import { RecollectScheduleProvider } from "./services/recollectScheduleProvider.js";
 import { RotationService } from "./services/rotationService.js";
@@ -151,6 +152,26 @@ async function requireAdmin(request: Request, config: WorkerConfig): Promise<Res
   return json({ error: "Admin access required." }, { status: 403 });
 }
 
+function redactStateForViewer(state: AppState): AppState {
+  return {
+    ...state,
+    config: {
+      ...state.config,
+      address: "Private"
+    },
+    housemates: state.housemates.map((housemate) => ({
+      id: housemate.id,
+      name: housemate.name,
+      roomNumber: "",
+      isActive: housemate.isActive
+    })),
+    rooms: [],
+    rotation: {
+      lastAssignedHousemateId: state.rotation.lastAssignedHousemateId
+    }
+  };
+}
+
 async function runSyncSchedule(config: WorkerConfig): Promise<{ state: AppState; events: CollectionEvent[] }> {
   const { store, assignmentService, scheduleProvider } = createServices(config);
   const events = await scheduleProvider.sync();
@@ -174,7 +195,12 @@ async function runWeeklyDuty(
 
   if (!result.assignment) {
     await store.save(state);
-    return { created: false, reason: "No eligible collection event found." };
+    return {
+      created: false,
+      reason: result.blockedByPendingApproval
+        ? "Admin approval is required for the previous assignment before the next duty can be created."
+        : "No eligible collection event found."
+    };
   }
 
   const context = assignmentService.getAssignmentContext(state, result.assignment);
@@ -200,9 +226,9 @@ async function runCompletionCheck(
   const { store, assignmentService, notificationService } = createServices(config);
   let state = await store.load();
   const today = getZonedDateTimeParts(config.appTimezone).date;
-  const assignment = assignmentService.getActiveAssignment(state, today);
+  const assignment = assignmentService.getAssignmentAwaitingDecision(state, today);
   if (!assignment) {
-    return { sent: false, reason: "No active assignment found." };
+    return { sent: false, reason: "No assignment is awaiting admin approval." };
   }
 
   if (!assignmentService.isCompletionCheckDue(assignment, config.appTimezone)) {
@@ -220,6 +246,75 @@ async function runCompletionCheck(
   state = assignmentService.markCompletionCheckSent(state, assignment.id);
   await store.save(state);
   return { sent: true, assignmentId: assignment.id };
+}
+
+async function runDayBeforeReminder(
+  config: WorkerConfig,
+  adminUrl: string
+): Promise<{ sent: boolean; reason?: string; assignmentId?: string }> {
+  const { store, assignmentService, scheduleProvider, notificationService } = createServices(config);
+  let state = await store.load();
+  const today = getZonedDateTimeParts(config.appTimezone).date;
+  const events = await scheduleProvider.sync();
+  state = assignmentService.syncCollectionEvents(state, events);
+  const assignment = assignmentService.getActiveAssignment(state, today);
+
+  if (!assignment) {
+    await store.save(state);
+    return { sent: false, reason: "No active assignment found." };
+  }
+
+  const context = assignmentService.getAssignmentContext(state, assignment);
+  if (!assignmentService.isBackupReminderDue(assignment, context.collectionEvent, config.appTimezone)) {
+    await store.save(state);
+    return { sent: false, reason: "Day-before reminder is not due yet." };
+  }
+
+  await notificationService.sendCollectionBackup({
+    assignment,
+    assignee: context.assignee,
+    collectionEvent: context.collectionEvent,
+    address: state.config.address,
+    adminUrl
+  });
+  state = assignmentService.markBackupReminderSent(state, assignment.id);
+  await store.save(state);
+  return { sent: true, assignmentId: assignment.id };
+}
+
+async function runDailyMaintenanceJob(
+  config: WorkerConfig,
+  adminUrl: string
+): Promise<{
+  synced: number;
+  assignmentCreated: boolean;
+  weeklyReminderSent: boolean;
+  dayBeforeReminderSent: boolean;
+  completionCheckSent: boolean;
+  assignmentId?: string;
+}> {
+  const { store, assignmentService, scheduleProvider, notificationService } = createServices(config);
+  const state = await store.load();
+  const today = getZonedDateTimeParts(config.appTimezone).date;
+  const result = await runDailyMaintenance({
+    state,
+    today,
+    timeZone: config.appTimezone,
+    appBaseUrl: adminUrl.replace(/\/admin$/, ""),
+    scheduleProvider,
+    assignmentService,
+    notificationService
+  });
+  await store.save(result.state);
+
+  return {
+    synced: result.syncedEvents,
+    assignmentCreated: result.assignmentCreated,
+    weeklyReminderSent: result.weeklyReminderSent,
+    dayBeforeReminderSent: result.dayBeforeReminderSent,
+    completionCheckSent: result.completionCheckSent,
+    assignmentId: result.assignment?.id
+  };
 }
 
 async function handleRequest(request: Request, env: WorkerEnv): Promise<Response> {
@@ -266,10 +361,12 @@ async function handleRequest(request: Request, env: WorkerEnv): Promise<Response
     if (request.method === "GET" && pathname === "/api/dashboard") {
       const state = await store.load();
       const today = getZonedDateTimeParts(config.appTimezone).date;
+      const isAdmin = await isAdminAuthenticated(request, config);
       return json({
-        state,
+        today,
+        state: isAdmin ? state : redactStateForViewer(state),
         auth: {
-          isAdmin: await isAdminAuthenticated(request, config),
+          isAdmin,
           username: config.adminUsername
         },
         nextAssignmentPreview: assignmentService.previewNextAssignment(state, today) ?? null
@@ -277,10 +374,20 @@ async function handleRequest(request: Request, env: WorkerEnv): Promise<Response
     }
 
     if (request.method === "GET" && pathname === "/api/state") {
+      const unauthorized = await requireAdmin(request, config);
+      if (unauthorized) {
+        return unauthorized;
+      }
+
       return json(await store.load());
     }
 
     if (request.method === "GET" && pathname === "/api/housemates") {
+      const unauthorized = await requireAdmin(request, config);
+      if (unauthorized) {
+        return unauthorized;
+      }
+
       const state = await store.load();
       return json(state.housemates);
     }
@@ -329,28 +436,12 @@ async function handleRequest(request: Request, env: WorkerEnv): Promise<Response
         whatsappNumber?: string;
         isActive?: boolean;
         notes?: string;
-        skipNextTurn?: boolean;
       }>(request);
 
       try {
         const state = await store.load();
         const result = housemateService.update(state, housemateId, input);
-        const skipOnceHousemateIds = new Set(result.state.rotation.skipOnceHousemateIds ?? []);
-        if (input.skipNextTurn === true) {
-          skipOnceHousemateIds.add(housemateId);
-        } else if (input.skipNextTurn === false) {
-          skipOnceHousemateIds.delete(housemateId);
-        }
-
-        const updatedState = {
-          ...result.state,
-          rotation: {
-            ...result.state.rotation,
-            skipOnceHousemateIds: Array.from(skipOnceHousemateIds)
-          }
-        };
-
-        await store.save(updatedState);
+        await store.save(result.state);
         return json(result.housemate);
       } catch (error) {
         return json({ error: (error as Error).message }, { status: 404 });
@@ -379,8 +470,57 @@ async function handleRequest(request: Request, env: WorkerEnv): Promise<Response
     }
 
     if (request.method === "GET" && pathname === "/api/assignments") {
+      const unauthorized = await requireAdmin(request, config);
+      if (unauthorized) {
+        return unauthorized;
+      }
+
       const state = await store.load();
       return json(state.assignments);
+    }
+
+    if (request.method === "PATCH" && pathname.startsWith("/api/assignments/")) {
+      const unauthorized = await requireAdmin(request, config);
+      if (unauthorized) {
+        return unauthorized;
+      }
+
+      const assignmentId = pathname.slice("/api/assignments/".length);
+      const input = await readJson<{
+        assigneeId?: string;
+        actualPerformerId?: string | null;
+        weekStart?: string;
+        weekEnd?: string;
+        status?: "assigned" | "reassigned" | "completed" | "missed";
+        completionStatus?: "pending" | "completed" | "not_completed";
+        primaryReminderSentAt?: string | null;
+        backupReminderSentAt?: string | null;
+        completionCheckSentAt?: string | null;
+        completionConfirmedAt?: string | null;
+        reassignedToNextPerson?: boolean;
+        carryOverToNextWeek?: boolean;
+      }>(request);
+
+      try {
+        const state = await store.load();
+        const result = assignmentService.updateAssignment(state, assignmentId, input);
+        await store.save(result.state);
+        return json(result.assignment);
+      } catch (error) {
+        return json({ error: (error as Error).message }, { status: 400 });
+      }
+    }
+
+    if (request.method === "PATCH" && pathname.startsWith("/api/collection-events/")) {
+      const unauthorized = await requireAdmin(request, config);
+      if (unauthorized) {
+        return unauthorized;
+      }
+
+      return json(
+        { error: "Collection schedule is managed from the live Halifax source and cannot be edited manually." },
+        { status: 403 }
+      );
     }
 
     if (request.method === "POST" && pathname === "/api/assignments/current/reassign-next") {
@@ -389,14 +529,19 @@ async function handleRequest(request: Request, env: WorkerEnv): Promise<Response
         return unauthorized;
       }
 
+      return json({ error: "Reassigning the duty to the next housemate is disabled." }, { status: 400 });
+    }
+
+    if (request.method === "POST" && pathname === "/api/jobs/run-daily-maintenance") {
+      const unauthorized = await requireAdmin(request, config);
+      if (unauthorized) {
+        return unauthorized;
+      }
+
       try {
-        const state = await store.load();
-        const today = getZonedDateTimeParts(config.appTimezone).date;
-        const updatedState = assignmentService.reassignCurrentWeekToNextPerson(state, today);
-        await store.save(updatedState);
-        return json({ ok: true });
+        return json(await runDailyMaintenanceJob(config, `${requestBaseUrl(request, config)}/admin`));
       } catch (error) {
-        return json({ error: (error as Error).message }, { status: 400 });
+        return json({ error: (error as Error).message }, { status: 500 });
       }
     }
 
@@ -409,7 +554,7 @@ async function handleRequest(request: Request, env: WorkerEnv): Promise<Response
       try {
         const state = await store.load();
         const today = getZonedDateTimeParts(config.appTimezone).date;
-        const updatedState = assignmentService.confirmCurrentWeekCompleted(state, today);
+        const updatedState = assignmentService.confirmCurrentWeekCompleted(state, config.appTimezone, today);
         await store.save(updatedState);
         return json({ ok: true });
       } catch (error) {
@@ -426,7 +571,7 @@ async function handleRequest(request: Request, env: WorkerEnv): Promise<Response
       try {
         const state = await store.load();
         const today = getZonedDateTimeParts(config.appTimezone).date;
-        const updatedState = assignmentService.carryCurrentWeekToNext(state, today);
+        const updatedState = assignmentService.carryCurrentWeekToNext(state, config.appTimezone, today);
         await store.save(updatedState);
         return json({ ok: true });
       } catch (error) {
@@ -512,6 +657,19 @@ async function handleRequest(request: Request, env: WorkerEnv): Promise<Response
       }
     }
 
+    if (request.method === "POST" && pathname === "/api/jobs/send-day-before-reminder") {
+      const unauthorized = await requireAdmin(request, config);
+      if (unauthorized) {
+        return unauthorized;
+      }
+
+      try {
+        return json(await runDayBeforeReminder(config, `${requestBaseUrl(request, config)}/admin`));
+      } catch (error) {
+        return json({ error: (error as Error).message }, { status: 500 });
+      }
+    }
+
     return json({ error: "Not found." }, { status: 404 });
   } catch (error) {
     return json({ error: (error as Error).message }, { status: 500 });
@@ -521,9 +679,7 @@ async function handleRequest(request: Request, env: WorkerEnv): Promise<Response
 async function handleScheduled(_: ScheduledControllerLike, env: WorkerEnv): Promise<void> {
   const config = loadWorkerConfig(env);
   const adminUrl = `${config.appBaseUrl ?? "https://example.com"}/admin`;
-  await runSyncSchedule(config);
-  await runWeeklyDuty(config, adminUrl);
-  await runCompletionCheck(config, adminUrl);
+  await runDailyMaintenanceJob(config, adminUrl);
 }
 
 const worker = {
