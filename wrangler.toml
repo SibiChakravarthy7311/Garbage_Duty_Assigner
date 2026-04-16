@@ -1,6 +1,7 @@
 name = "garbage-duty-assigner"
 main = "src/worker.ts"
 compatibility_date = "2026-03-15"
+compatibility_flags = ["nodejs_compat"]
 
 [vars]
 APP_TIMEZONE = "America/Halifax"
