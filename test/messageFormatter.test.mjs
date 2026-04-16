@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { formatWeeklyDutyMessage } from "../dist/services/messageFormatter.js";
+import { formatBackupReminderMessage, formatWeeklyDutyMessage } from "../dist/services/messageFormatter.js";
 
 function createNotification(overrides = {}) {
   return {
@@ -43,7 +43,7 @@ test("weekly duty message matches the required garbage-only template", () => {
     [
       "Waste Duty Reminder",
       "",
-      "This week's waste duty is Ishita (Room 6).",
+      "This week's waste duty is Ishita.",
       "",
       "Duty window: March 9, 2026 to March 16, 2026",
       "Collection day: Monday, March 16, 2026",
@@ -70,7 +70,7 @@ test("weekly duty message formats multi-stream reminders without contact or admi
         date: "2026-03-23",
         weekStart: "2026-03-16",
         weekEnd: "2026-03-23",
-        streams: ["recycling", "organics"],
+        streams: ["organics", "recycling"],
         status: "scheduled",
         source: "test"
       },
@@ -92,4 +92,26 @@ test("weekly duty message formats multi-stream reminders without contact or admi
   assert.match(message, /- empty and secure organics bags or bins/);
   assert.match(message, /- place recycling and organics out for pickup before 8:00 a\.m\./);
   assert.doesNotMatch(message, /WhatsApp|Phone:|Admin:|Review:|http:\/\/localhost/);
+});
+
+test("day-before reminder calls out tomorrow's pickup and organics set-out", () => {
+  const message = formatBackupReminderMessage(
+    createNotification({
+      collectionEvent: {
+        id: "event_3",
+        date: "2026-03-16",
+        weekStart: "2026-03-09",
+        weekEnd: "2026-03-16",
+        streams: ["garbage", "organics"],
+        status: "scheduled",
+        source: "test"
+      }
+    })
+  );
+
+  assert.match(message, /Collection Is Tomorrow/);
+  assert.match(message, /Set out tonight: Garbage and Organics/);
+  assert.match(message, /^Ishita is on duty for this week's collection\./m);
+  assert.match(message, /empty and secure the organics bags or bins/);
+  assert.match(message, /before 8:00 a\.m\. tomorrow/);
 });

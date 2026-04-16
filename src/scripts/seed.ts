@@ -14,8 +14,7 @@ async function main(): Promise<void> {
       id: createId("housemate"),
       name: "Mandeep",
       roomNumber: "1",
-      isActive: true,
-      notes: "Newly moved in"
+      isActive: true
     },
     {
       id: createId("housemate"),
@@ -71,7 +70,7 @@ async function main(): Promise<void> {
     { id: createId("room"), label: "Room 7", isActive: true, occupantId: state.housemates[6]?.id }
   ];
 
-  state.rotation.skipOnceHousemateIds = [state.housemates[0].id];
+  state.rotation.lastAssignedHousemateId = state.housemates[3]?.id;
 
   await store.save(state);
   console.log(`Seeded state file at ${config.stateFile}`);

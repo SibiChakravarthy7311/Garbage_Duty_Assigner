@@ -7,11 +7,13 @@ import { ConsoleNotificationService } from "./services/consoleNotificationServic
 import { FileScheduleProvider } from "./services/fileScheduleProvider.js";
 import { HalifaxScheduleProvider } from "./services/halifaxScheduleProvider.js";
 import { HousemateService } from "./services/housemateService.js";
+import { runDailyMaintenance } from "./services/maintenanceService.js";
 import { RotationService } from "./services/rotationService.js";
 import { TelegramNotificationService } from "./services/telegramNotificationService.js";
 import { adminCredentialsMatch, clearAdminSession, isAdminAuthenticated, setAdminSession } from "./lib/adminAuth.js";
 import { getZonedDateTimeParts } from "./lib/zonedDateTime.js";
 import { renderAdminPage } from "./ui/adminPage.js";
+import type { AppState } from "./domain/types.js";
 import type { CreateHousemateInput } from "./services/housemateService.js";
 import type { NotificationService } from "./services/notificationService.js";
 import type { ScheduleProvider } from "./services/scheduleProvider.js";
@@ -44,6 +46,26 @@ export async function buildApp() {
     return false;
   }
 
+  function redactStateForViewer(state: AppState): AppState {
+    return {
+      ...state,
+      config: {
+        ...state.config,
+        address: "Private"
+      },
+      housemates: state.housemates.map((housemate) => ({
+        id: housemate.id,
+        name: housemate.name,
+        roomNumber: "",
+        isActive: housemate.isActive
+      })),
+      rooms: [],
+      rotation: {
+        lastAssignedHousemateId: state.rotation.lastAssignedHousemateId
+      }
+    };
+  }
+
   app.get("/health", async () => ({ ok: true }));
   app.get("/", async (_, reply) => reply.type("text/html").send(renderAdminPage()));
   app.get("/admin", async (_, reply) => reply.type("text/html").send(renderAdminPage()));
@@ -72,19 +94,31 @@ export async function buildApp() {
   app.get("/api/dashboard", async (request) => {
     const state = await store.load();
     const today = getZonedDateTimeParts(config.appTimezone).date;
+    const isAdmin = isAdminAuthenticated(request, config);
     return {
-      state,
+      today,
+      state: isAdmin ? state : redactStateForViewer(state),
       auth: {
-        isAdmin: isAdminAuthenticated(request, config),
+        isAdmin,
         username: config.adminUsername
       },
       nextAssignmentPreview: assignmentService.previewNextAssignment(state, today) ?? null
     };
   });
 
-  app.get("/api/state", async () => store.load());
+  app.get("/api/state", async (request, reply) => {
+    if (!requireAdmin(request, reply)) {
+      return;
+    }
 
-  app.get("/api/housemates", async () => {
+    return store.load();
+  });
+
+  app.get("/api/housemates", async (request, reply) => {
+    if (!requireAdmin(request, reply)) {
+      return;
+    }
+
     const state = await store.load();
     return state.housemates;
   });
@@ -134,27 +168,12 @@ export async function buildApp() {
       whatsappNumber?: string;
       isActive?: boolean;
       notes?: string;
-      skipNextTurn?: boolean;
     };
 
     try {
       const state = await store.load();
       const result = housemateService.update(state, params.id, input);
-      const skipOnceHousemateIds = new Set(result.state.rotation.skipOnceHousemateIds ?? []);
-      if (input.skipNextTurn === true) {
-        skipOnceHousemateIds.add(params.id);
-      } else if (input.skipNextTurn === false) {
-        skipOnceHousemateIds.delete(params.id);
-      }
-
-      const updatedState = {
-        ...result.state,
-        rotation: {
-          ...result.state.rotation,
-          skipOnceHousemateIds: Array.from(skipOnceHousemateIds)
-        }
-      };
-      await store.save(updatedState);
+      await store.save(result.state);
       return result.housemate;
     } catch (error) {
       return reply.status(404).send({ error: (error as Error).message });
@@ -181,9 +200,52 @@ export async function buildApp() {
     }
   });
 
-  app.get("/api/assignments", async () => {
+  app.get("/api/assignments", async (request, reply) => {
+    if (!requireAdmin(request, reply)) {
+      return;
+    }
+
     const state = await store.load();
     return state.assignments;
+  });
+
+  app.patch("/api/assignments/:id", async (request, reply) => {
+    if (!requireAdmin(request, reply)) {
+      return;
+    }
+
+    const params = request.params as { id: string };
+    const input = request.body as {
+      assigneeId?: string;
+      actualPerformerId?: string | null;
+      weekStart?: string;
+      weekEnd?: string;
+      status?: "assigned" | "reassigned" | "completed" | "missed";
+      completionStatus?: "pending" | "completed" | "not_completed";
+      primaryReminderSentAt?: string | null;
+      backupReminderSentAt?: string | null;
+      completionCheckSentAt?: string | null;
+      completionConfirmedAt?: string | null;
+      reassignedToNextPerson?: boolean;
+      carryOverToNextWeek?: boolean;
+    };
+
+    try {
+      const state = await store.load();
+      const result = assignmentService.updateAssignment(state, params.id, input);
+      await store.save(result.state);
+      return result.assignment;
+    } catch (error) {
+      return reply.status(400).send({ error: (error as Error).message });
+    }
+  });
+
+  app.patch("/api/collection-events/:id", async (request, reply) => {
+    if (!requireAdmin(request, reply)) {
+      return;
+    }
+
+    return reply.status(403).send({ error: "Collection schedule is managed from the live Halifax source and cannot be edited manually." });
   });
 
   app.post("/api/assignments/current/reassign-next", async (_, reply) => {
@@ -191,15 +253,7 @@ export async function buildApp() {
       return;
     }
 
-    try {
-      const state = await store.load();
-      const today = getZonedDateTimeParts(config.appTimezone).date;
-      const updatedState = assignmentService.reassignCurrentWeekToNextPerson(state, today);
-      await store.save(updatedState);
-      return { ok: true };
-    } catch (error) {
-      return reply.status(400).send({ error: (error as Error).message });
-    }
+    return reply.status(400).send({ error: "Reassigning the duty to the next housemate is disabled." });
   });
 
   app.post("/api/assignments/current/complete", async (_, reply) => {
@@ -210,7 +264,7 @@ export async function buildApp() {
     try {
       const state = await store.load();
       const today = getZonedDateTimeParts(config.appTimezone).date;
-      const updatedState = assignmentService.confirmCurrentWeekCompleted(state, today);
+      const updatedState = assignmentService.confirmCurrentWeekCompleted(state, config.appTimezone, today);
       await store.save(updatedState);
       return { ok: true };
     } catch (error) {
@@ -226,7 +280,7 @@ export async function buildApp() {
     try {
       const state = await store.load();
       const today = getZonedDateTimeParts(config.appTimezone).date;
-      const updatedState = assignmentService.carryCurrentWeekToNext(state, today);
+      const updatedState = assignmentService.carryCurrentWeekToNext(state, config.appTimezone, today);
       await store.save(updatedState);
       return { ok: true };
     } catch (error) {
@@ -241,6 +295,37 @@ export async function buildApp() {
       const updatedState = assignmentService.syncCollectionEvents(state, events);
       await store.save(updatedState);
       return { synced: events.length, events };
+    } catch (error) {
+      return reply.status(500).send({ error: (error as Error).message });
+    }
+  });
+
+  app.post("/api/jobs/run-daily-maintenance", async (request, reply) => {
+    if (!requireAdmin(request, reply)) {
+      return;
+    }
+
+    try {
+      const state = await store.load();
+      const today = getZonedDateTimeParts(config.appTimezone).date;
+      const result = await runDailyMaintenance({
+        state,
+        today,
+        timeZone: config.appTimezone,
+        appBaseUrl: config.appBaseUrl,
+        scheduleProvider,
+        assignmentService,
+        notificationService
+      });
+      await store.save(result.state);
+      return {
+        synced: result.syncedEvents,
+        assignmentCreated: result.assignmentCreated,
+        weeklyReminderSent: result.weeklyReminderSent,
+        dayBeforeReminderSent: result.dayBeforeReminderSent,
+        completionCheckSent: result.completionCheckSent,
+        assignmentId: result.assignment?.id
+      };
     } catch (error) {
       return reply.status(500).send({ error: (error as Error).message });
     }
@@ -262,7 +347,12 @@ export async function buildApp() {
 
       if (!result.assignment) {
         await store.save(state);
-        return { created: false, reason: "No eligible collection event found." };
+        return {
+          created: false,
+          reason: result.blockedByPendingApproval
+            ? "Admin approval is required for the previous assignment before the next duty can be created."
+            : "No eligible collection event found."
+        };
       }
 
       const context = assignmentService.getAssignmentContext(state, result.assignment);
@@ -317,6 +407,44 @@ export async function buildApp() {
     }
   });
 
+  app.post("/api/jobs/send-day-before-reminder", async (request, reply) => {
+    if (!requireAdmin(request, reply)) {
+      return;
+    }
+
+    try {
+      let state = await store.load();
+      const today = getZonedDateTimeParts(config.appTimezone).date;
+      const events = await scheduleProvider.sync();
+      state = assignmentService.syncCollectionEvents(state, events);
+      const assignment = assignmentService.getActiveAssignment(state, today);
+
+      if (!assignment) {
+        await store.save(state);
+        return { sent: false, reason: "No active assignment found." };
+      }
+
+      const context = assignmentService.getAssignmentContext(state, assignment);
+      if (!assignmentService.isBackupReminderDue(assignment, context.collectionEvent, config.appTimezone)) {
+        await store.save(state);
+        return { sent: false, reason: "Day-before reminder is not due yet." };
+      }
+
+      await notificationService.sendCollectionBackup({
+        assignment,
+        assignee: context.assignee,
+        collectionEvent: context.collectionEvent,
+        address: state.config.address,
+        adminUrl: `${config.appBaseUrl}/admin`
+      });
+      state = assignmentService.markBackupReminderSent(state, assignment.id);
+      await store.save(state);
+      return { sent: true, assignmentId: assignment.id };
+    } catch (error) {
+      return reply.status(500).send({ error: (error as Error).message });
+    }
+  });
+
   app.post("/api/jobs/send-completion-check", async (_, reply) => {
     if (!requireAdmin(_, reply)) {
       return;
@@ -325,9 +453,9 @@ export async function buildApp() {
     try {
       let state = await store.load();
       const today = getZonedDateTimeParts(config.appTimezone).date;
-      const assignment = assignmentService.getActiveAssignment(state, today);
+      const assignment = assignmentService.getAssignmentAwaitingDecision(state, today);
       if (!assignment) {
-        return { sent: false, reason: "No active assignment found." };
+        return { sent: false, reason: "No assignment is awaiting admin approval." };
       }
 
       if (!assignmentService.isCompletionCheckDue(assignment, config.appTimezone)) {

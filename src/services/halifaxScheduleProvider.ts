@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import type { CollectionEvent } from "../domain/types.js";
-import { normalizeCollectionEvents } from "./collectionEventUtils.js";
+import { normalizeCollectionEvents, sortWasteStreams } from "./collectionEventUtils.js";
 import type { ScheduleProvider } from "./scheduleProvider.js";
 
 interface RecollectFlag {
@@ -33,7 +33,7 @@ function mapFlagToStream(flag: RecollectFlag): "garbage" | "recycling" | "organi
     return "organics";
   }
 
-  if (values.includes("recycling") || values.includes("recyclables") || values.includes("paperbag2")) {
+  if (values.includes("recycling") || values.includes("recyclables") || values.includes("paperbag")) {
     return "recycling";
   }
 
@@ -114,26 +114,38 @@ export class HalifaxScheduleProvider implements ScheduleProvider {
     }
 
     const payload = await response.json();
-    const pickupDays = extractEvents(payload)
-      .map((event) => {
-        const streams = new Set<"garbage" | "recycling" | "organics">();
-        for (const flag of event.flags ?? []) {
-          if (!isPickupFlag(flag)) {
-            continue;
-          }
+    const groupedStreams = new Map<string, Set<"garbage" | "recycling" | "organics">>();
 
-          const stream = mapFlagToStream(flag);
-          if (stream) {
-            streams.add(stream);
-          }
+    for (const event of extractEvents(payload)) {
+      const streams = groupedStreams.get(event.day) ?? new Set<"garbage" | "recycling" | "organics">();
+      for (const flag of event.flags ?? []) {
+        if (!isPickupFlag(flag)) {
+          continue;
         }
 
+        const stream = mapFlagToStream(flag);
+        if (stream) {
+          streams.add(stream);
+        }
+      }
+
+      if (streams.size > 0) {
+        groupedStreams.set(event.day, streams);
+      }
+    }
+
+    const pickupDays = [...groupedStreams.entries()]
+      .map(([day, streams]) => {
+        const normalizedStreams = sortWasteStreams([...streams]);
+        const shouldIncludeOrganics =
+          !normalizedStreams.includes("organics") &&
+          (normalizedStreams.includes("garbage") || normalizedStreams.includes("recycling"));
+
         return {
-          day: event.day,
-          streams: [...streams]
+          day,
+          streams: shouldIncludeOrganics ? sortWasteStreams([...normalizedStreams, "organics"]) : normalizedStreams
         };
       })
-      .filter((event) => event.streams.length > 0)
       .sort((left, right) => left.day.localeCompare(right.day));
 
     return normalizeCollectionEvents(pickupDays.map((event, index) => ({

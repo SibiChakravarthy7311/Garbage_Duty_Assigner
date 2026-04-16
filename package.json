@@ -14,6 +14,8 @@
     "seed": "tsx src/scripts/seed.ts",
     "sync:schedule": "tsx src/scripts/syncSchedule.ts",
     "run:weekly": "tsx src/scripts/runWeeklyDuty.ts",
+    "run:maintenance": "tsx src/scripts/runDailyMaintenance.ts",
+    "run:day-before": "tsx src/scripts/sendDayBeforeReminder.ts",
     "run:completion-check": "tsx src/scripts/sendCompletionCheck.ts",
     "resend:weekly": "tsx src/scripts/resendWeeklyReminder.ts",
     "test:telegram": "tsx src/scripts/testTelegram.ts",

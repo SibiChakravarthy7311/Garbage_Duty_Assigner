@@ -142,8 +142,25 @@ test("health, admin page, dashboard session, and raw state endpoints work agains
     assert.match(adminResponse.body, /Garbage Duty Admin/);
 
     const stateResponse = await context.app.inject({ method: "GET", url: "/api/state" });
-    assert.equal(stateResponse.statusCode, 200);
-    assert.deepEqual(stateResponse.json(), {
+    assert.equal(stateResponse.statusCode, 403);
+
+    const dashboardResponse = await context.app.inject({ method: "GET", url: "/api/dashboard" });
+    assert.equal(dashboardResponse.statusCode, 200);
+    assert.equal(dashboardResponse.json().auth.isAdmin, false);
+    assert.equal(dashboardResponse.json().nextAssignmentPreview, null);
+    assert.equal(dashboardResponse.json().state.config.address, "Private");
+
+    const adminCookie = await loginAsAdmin(context.app);
+    const adminStateResponse = await context.app.inject({
+      method: "GET",
+      url: "/api/state",
+      headers: {
+        cookie: adminCookie
+      }
+    });
+
+    assert.equal(adminStateResponse.statusCode, 200);
+    assert.deepEqual(adminStateResponse.json(), {
       config: {
         address: "5835 Balmoral Road, Halifax, NS, B3H1A5",
         timezone: "America/Halifax",
@@ -155,11 +172,6 @@ test("health, admin page, dashboard session, and raw state endpoints work agains
       assignments: [],
       rotation: {}
     });
-
-    const dashboardResponse = await context.app.inject({ method: "GET", url: "/api/dashboard" });
-    assert.equal(dashboardResponse.statusCode, 200);
-    assert.equal(dashboardResponse.json().auth.isAdmin, false);
-    assert.equal(dashboardResponse.json().nextAssignmentPreview, null);
   } finally {
     await context.cleanup();
   }
@@ -208,8 +220,7 @@ test("housemate edits require admin login and persist through the API", async ()
       },
       payload: {
         name: "Sibi C",
-        notes: "Prefers WhatsApp reminders",
-        skipNextTurn: true
+        notes: "Prefers WhatsApp reminders"
       }
     });
 
@@ -222,7 +233,7 @@ test("housemate edits require admin login and persist through the API", async ()
     assert.equal(state.housemates.length, 1);
     assert.equal(state.housemates[0]?.name, "Sibi C");
     assert.equal(state.housemates[0]?.notes, "Prefers WhatsApp reminders");
-    assert.deepEqual(state.rotation.skipOnceHousemateIds, [created.id]);
+    assert.deepEqual(state.rotation, {});
   } finally {
     await context.cleanup();
   }
@@ -308,7 +319,8 @@ test("viewer can sync Halifax but only admin can run weekly-duty actions", async
   }
 });
 
-test("dashboard preview exposes the next predicted assignee", async () => {
+test("dashboard preview exposes the next predicted assignee", async (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date("2026-03-16T12:00:00.000Z") });
   const context = await createTestApp({
     initialState: {
       config: {
@@ -344,11 +356,14 @@ test("dashboard preview exposes the next predicted assignee", async () => {
         }
       ],
       assignments: [
-        createAssignment("assignment_current", "housemate_4", "event_current", "2026-03-09", "2026-03-16")
+        {
+          ...createAssignment("assignment_current", "housemate_1", "event_current", "2026-03-09", "2026-03-16"),
+          status: "completed",
+          completionStatus: "completed"
+        }
       ],
       rotation: {
-        lastAssignedHousemateId: "housemate_4",
-        skipOnceHousemateIds: ["housemate_3", "housemate_1"]
+        lastAssignedHousemateId: "housemate_1"
       }
     }
   });
@@ -365,12 +380,11 @@ test("dashboard preview exposes the next predicted assignee", async () => {
       assigneeId: "housemate_2",
       collectionEventId: "event_next",
       weekStart: "2026-03-16",
-      weekEnd: "2026-03-23",
-      selectionMode: "rotation",
-      skippedHousemateIds: ["housemate_1"]
+      weekEnd: "2026-03-23"
     });
   } finally {
     await context.cleanup();
+    t.mock.timers.reset();
   }
 });
 
@@ -441,7 +455,20 @@ test("halifax live place id takes priority over import-file fallback", async () 
               day: "2026-03-23",
               flags: [
                 {
+                  name: "Organics",
+                  event_type: "pickup"
+                }
+              ]
+            },
+            {
+              day: "2026-03-23",
+              flags: [
+                {
                   name: "Recycling",
+                  event_type: "pickup"
+                },
+                {
+                  name: "PaperBag2",
                   event_type: "pickup"
                 }
               ]
@@ -476,8 +503,10 @@ test("halifax live place id takes priority over import-file fallback", async () 
 
     assert.equal(response.statusCode, 200);
     assert.equal(response.json().events[0]?.date, "2026-03-16");
+    assert.equal(response.json().events.length, 2);
     assert.equal(response.json().events[1]?.weekStart, "2026-03-16");
     assert.equal(response.json().events[1]?.source, "halifax-live");
+    assert.deepEqual(response.json().events[1]?.streams, ["recycling", "organics"]);
   } finally {
     globalThis.fetch = originalFetch;
     await context.cleanup();
@@ -507,10 +536,56 @@ test("send-completion-check requires admin and returns a no-op response when no 
     assert.equal(response.statusCode, 200);
     assert.deepEqual(response.json(), {
       sent: false,
-      reason: "No active assignment found."
+      reason: "No assignment is awaiting admin approval."
     });
   } finally {
     await context.cleanup();
+  }
+});
+
+test("admin cannot approve the current week before 8am on collection day", async (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date("2026-03-16T10:30:00.000Z") });
+  const today = "2026-03-16";
+  const housemate = createHousemate("housemate_1", "Kabilesh", "5");
+  const collectionEvent = createCollectionEvent("event_due_today", today);
+  const assignment = createAssignment("assignment_due_today", housemate.id, collectionEvent.id, "2026-03-09", today);
+
+  const context = await createTestApp({
+    initialState: {
+      config: {
+        address: "5835 Balmoral Road, Halifax, NS, B3H1A5",
+        timezone: "America/Halifax",
+        scheduleSource: "file"
+      },
+      housemates: [housemate],
+      rooms: [],
+      collectionEvents: [collectionEvent],
+      assignments: [assignment],
+      rotation: {
+        lastAssignedHousemateId: housemate.id
+      }
+    }
+  });
+
+  try {
+    const adminCookie = await loginAsAdmin(context.app);
+    const response = await context.app.inject({
+      method: "POST",
+      url: "/api/assignments/current/complete",
+      headers: {
+        cookie: adminCookie
+      }
+    });
+
+    assert.equal(response.statusCode, 400);
+    assert.match(response.json().error, /after 8:00 a\.m\. on 2026-03-16/i);
+
+    const state = await readState(context.stateFile);
+    assert.equal(state.assignments[0]?.status, "assigned");
+    assert.equal(state.rotation.lastAssignedHousemateId, housemate.id);
+  } finally {
+    await context.cleanup();
+    t.mock.timers.reset();
   }
 });
 
@@ -557,6 +632,241 @@ test("send-completion-check marks an active assignment when the reminder is due"
     const state = await readState(context.stateFile);
     assert.equal(state.assignments[0]?.completionCheckSentAt, "2026-03-16T16:00:00.000Z");
     assert.equal(state.assignments[0]?.completionStatus, "pending");
+  } finally {
+    await context.cleanup();
+    t.mock.timers.reset();
+  }
+});
+
+test("dashboard uses server-side today and admin can repair assignment records", async (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date("2026-04-15T12:00:00.000Z") });
+  const context = await createTestApp({
+    initialState: {
+      config: {
+        address: "5835 Balmoral Road, Halifax, NS, B3H1A5",
+        timezone: "America/Halifax",
+        scheduleSource: "file"
+      },
+      housemates: [
+        createHousemate("housemate_1", "Mandeep", "1"),
+        createHousemate("housemate_2", "Sibi", "3")
+      ],
+      rooms: [],
+      collectionEvents: [
+        {
+          id: "event_current",
+          date: "2026-04-20",
+          weekStart: "2026-04-13",
+          weekEnd: "2026-04-20",
+          streams: ["garbage"],
+          status: "scheduled",
+          source: "test"
+        }
+      ],
+      assignments: [
+        createAssignment("assignment_current", "housemate_1", "event_current", "2026-04-13", "2026-04-20")
+      ],
+      rotation: {
+        lastAssignedHousemateId: "housemate_1"
+      }
+    }
+  });
+
+  try {
+    const dashboardResponse = await context.app.inject({
+      method: "GET",
+      url: "/api/dashboard"
+    });
+
+    assert.equal(dashboardResponse.statusCode, 200);
+    assert.equal(dashboardResponse.json().today, "2026-04-15");
+
+    const adminCookie = await loginAsAdmin(context.app);
+    const updateResponse = await context.app.inject({
+      method: "PATCH",
+      url: "/api/assignments/assignment_current",
+      headers: {
+        cookie: adminCookie
+      },
+      payload: {
+        assigneeId: "housemate_2",
+        actualPerformerId: "housemate_2",
+        status: "completed",
+        completionStatus: "completed",
+        carryOverToNextWeek: false
+      }
+    });
+
+    assert.equal(updateResponse.statusCode, 200);
+    assert.equal(updateResponse.json().assigneeId, "housemate_2");
+    assert.equal(updateResponse.json().completionStatus, "completed");
+
+    const state = await readState(context.stateFile);
+    assert.equal(state.assignments[0]?.assigneeId, "housemate_2");
+    assert.equal(state.assignments[0]?.status, "completed");
+  } finally {
+    await context.cleanup();
+    t.mock.timers.reset();
+  }
+});
+
+test("day-before reminder endpoint marks the active assignment when the reminder is due", async (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date("2026-03-15T21:00:00.000Z") });
+  const context = await createTestApp({
+    initialState: {
+      config: {
+        address: "5835 Balmoral Road, Halifax, NS, B3H1A5",
+        timezone: "America/Halifax",
+        scheduleSource: "file"
+      },
+      housemates: [createHousemate("housemate_1", "Ishita", "6")],
+      rooms: [],
+      collectionEvents: [
+        {
+          id: "event_2026_03_16",
+          date: "2026-03-16",
+          weekStart: "2026-03-09",
+          weekEnd: "2026-03-16",
+          streams: ["garbage", "organics"],
+          status: "scheduled",
+          source: "test"
+        }
+      ],
+      assignments: [
+        createAssignment("assignment_due_tomorrow", "housemate_1", "event_2026_03_16", "2026-03-09", "2026-03-16")
+      ],
+      rotation: {
+        lastAssignedHousemateId: "housemate_1"
+      }
+    }
+  });
+
+  try {
+    const adminCookie = await loginAsAdmin(context.app);
+    const response = await context.app.inject({
+      method: "POST",
+      url: "/api/jobs/send-day-before-reminder",
+      headers: {
+        cookie: adminCookie
+      }
+    });
+
+    assert.equal(response.statusCode, 200);
+    assert.deepEqual(response.json(), {
+      sent: true,
+      assignmentId: "assignment_due_tomorrow"
+    });
+
+    const state = await readState(context.stateFile);
+    assert.equal(state.assignments[0]?.backupReminderSentAt, "2026-03-15T21:00:00.000Z");
+  } finally {
+    await context.cleanup();
+    t.mock.timers.reset();
+  }
+});
+
+test("schedule sync replaces stale local collection event data with live-imported data", async () => {
+  const context = await createTestApp({
+    scheduleSource: "halifax",
+    halifaxImportEvents: [
+      {
+        id: "event_2026_03_16",
+        date: "2026-03-16",
+        weekStart: "2026-03-09",
+        weekEnd: "2026-03-16",
+        streams: ["garbage"],
+        status: "scheduled",
+        source: "halifax-import"
+      }
+    ],
+    initialState: {
+      config: {
+        address: "5835 Balmoral Road, Halifax, NS, B3H1A5",
+        timezone: "America/Halifax",
+        scheduleSource: "halifax"
+      },
+      housemates: [],
+      rooms: [],
+      collectionEvents: [
+        {
+          id: "event_2026_03_16",
+          date: "2026-03-17",
+          weekStart: "2026-03-09",
+          weekEnd: "2026-03-17",
+          streams: ["garbage", "organics"],
+          status: "delayed",
+          source: "stale-local-cache",
+          notes: "Snow delay"
+        }
+      ],
+      assignments: [],
+      rotation: {}
+    }
+  });
+
+  try {
+    const response = await context.app.inject({
+      method: "POST",
+      url: "/api/jobs/sync-schedule"
+    });
+
+    assert.equal(response.statusCode, 200);
+    const state = await readState(context.stateFile);
+    assert.equal(state.collectionEvents[0]?.date, "2026-03-16");
+    assert.deepEqual(state.collectionEvents[0]?.streams, ["garbage"]);
+    assert.equal(state.collectionEvents[0]?.status, "scheduled");
+    assert.equal(state.collectionEvents[0]?.source, "halifax-import");
+  } finally {
+    await context.cleanup();
+  }
+});
+
+test("saved state keeps only the seven most recent past assignments", async (t) => {
+  t.mock.timers.enable({ apis: ["Date"], now: new Date("2026-04-16T12:00:00.000Z") });
+  const pastAssignments = [
+    createAssignment("assignment_1", "housemate_1", "event_1", "2026-01-05", "2026-01-12"),
+    createAssignment("assignment_2", "housemate_1", "event_2", "2026-01-12", "2026-01-19"),
+    createAssignment("assignment_3", "housemate_1", "event_3", "2026-01-19", "2026-01-26"),
+    createAssignment("assignment_4", "housemate_1", "event_4", "2026-01-26", "2026-02-02"),
+    createAssignment("assignment_5", "housemate_1", "event_5", "2026-02-02", "2026-02-09"),
+    createAssignment("assignment_6", "housemate_1", "event_6", "2026-02-09", "2026-02-16"),
+    createAssignment("assignment_7", "housemate_1", "event_7", "2026-02-16", "2026-02-23"),
+    createAssignment("assignment_8", "housemate_1", "event_8", "2026-02-23", "2026-03-02"),
+    createAssignment("assignment_9", "housemate_1", "event_9", "2026-03-02", "2026-03-09")
+  ].map((assignment) => ({
+    ...assignment,
+    status: "completed",
+    completionStatus: "completed"
+  }));
+
+  const context = await createTestApp({
+    initialState: {
+      config: {
+        address: "5835 Balmoral Road, Halifax, NS, B3H1A5",
+        timezone: "America/Halifax",
+        scheduleSource: "file"
+      },
+      housemates: [createHousemate("housemate_1", "Kabilesh", "5")],
+      rooms: [],
+      collectionEvents: [],
+      assignments: pastAssignments,
+      rotation: {
+        lastAssignedHousemateId: "housemate_1"
+      }
+    }
+  });
+
+  try {
+    const response = await context.app.inject({
+      method: "POST",
+      url: "/api/jobs/sync-schedule"
+    });
+
+    assert.equal(response.statusCode, 200);
+    const state = await readState(context.stateFile);
+    assert.equal(state.assignments.length, 7);
+    assert.equal(state.assignments[0]?.id, "assignment_3");
+    assert.equal(state.assignments[6]?.id, "assignment_9");
   } finally {
     await context.cleanup();
     t.mock.timers.reset();

@@ -41,7 +41,7 @@ export function renderAdminPage(): string {
       .detail .value { margin-top:6px; font-weight:700; }
       .streams { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
       .stream { padding:5px 10px; border-radius:999px; background:var(--accent-soft); color:var(--accent); font-size:12px; }
-      .button-row { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:10px; }
+      .button-row { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px,1fr)); gap:10px; }
       button, input, select, textarea { width:100%; font:inherit; border-radius:14px; }
       button { border:0; padding:12px 14px; cursor:pointer; font-weight:700; color:#fff; background:linear-gradient(135deg, #1e5263, #173d4a); box-shadow:0 12px 26px rgba(31,77,95,.2); }
       button.secondary { background:linear-gradient(135deg, #7c9431, #677926); box-shadow:0 12px 26px rgba(120,144,45,.2); }
@@ -65,32 +65,33 @@ export function renderAdminPage(): string {
         <div>
           <div class="eyebrow"><span class="dot"></span> Halifax Household Rotation</div>
           <h1>Keep the duty fair, even when life is messy.</h1>
-          <p class="hero-copy">Viewers can monitor the dashboard and sync Halifax. Admin access unlocks reminders, carry-over decisions, and roster changes.</p>
           <div id="heroMeta" class="hero-meta"></div>
         </div>
         <div class="mini-grid">
           <div class="auth-box">
             <div class="label">Access</div>
             <h2 id="authTitle">Dashboard Viewer</h2>
-            <p id="authNote" class="muted">Sign in as admin to unlock edits and manual actions.</p>
+            <p id="authNote" class="muted"></p>
             <div id="authPanel"></div>
             <p id="authStatus" class="status"></p>
           </div>
           <div class="tile"><div class="label">Current Week</div><div id="miniCurrentAssignee" class="value-big">-</div><div id="miniCurrentWindow" class="muted">No active assignment</div></div>
-          <div class="tile"><div class="label">Next Collection</div><div id="miniNextCollection" class="value-big">-</div><div id="miniNextStreams" class="muted">Waiting for sync</div></div>
-          <div class="tile"><div class="label">Next Week</div><div id="miniNextWeek" class="value-big">Auto</div><div id="miniNextWeekNote" class="muted">Normal rotation will continue</div></div>
+          <div class="tile"><div class="label">Current Pickup</div><div id="miniNextCollection" class="value-big">-</div><div id="miniNextStreams" class="muted">Waiting for sync</div></div>
+          <div class="tile"><div class="label">Next Week</div><div id="miniNextWeek" class="value-big">Auto</div><div id="miniNextWeekNote" class="muted"></div></div>
         </div>
       </section>
 
       <section class="grid">
         <section class="card span-8">
           <div class="section-head">
-            <div><h2>Operations</h2><p>Viewers can sync Halifax. Admins can run reminders and weekly assignment jobs.</p></div>
+            <div><h2>Operations</h2></div>
             <span id="opsBadge" class="badge viewer">Viewer</span>
           </div>
           <div id="operationsButtons" class="button-row">
             <button id="syncSchedule">Sync Halifax</button>
+            <button id="runDailyMaintenance" class="secondary">Run Daily Maintenance</button>
             <button id="runWeekly">Run Weekly Duty</button>
+            <button id="sendDayBeforeReminder" class="secondary">Send Day-Before Reminder</button>
             <button id="resendWeekly" class="secondary">Resend Weekly</button>
             <button id="sendCompletionCheck" class="warn">Send 11AM Check</button>
           </div>
@@ -98,37 +99,36 @@ export function renderAdminPage(): string {
         </section>
 
         <section class="card span-4">
-          <div class="section-head"><div><h2>System Snapshot</h2><p>Who is queued, what has been completed, and whether intervention is pending.</p></div></div>
+          <div class="section-head"><div><h2>System Snapshot</h2></div></div>
           <div id="summary" class="summary-grid"></div>
         </section>
 
         <section class="card span-12">
-          <div class="section-head"><div><h2>Rotation Metrics</h2><p>Operational counts pulled from current state.</p></div></div>
+          <div class="section-head"><div><h2>Rotation Metrics</h2></div></div>
           <div id="metrics" class="metrics"></div>
         </section>
 
         <section id="currentWeekActionsCard" class="card span-7">
-          <div class="section-head"><div><h2>Current Week Actions</h2><p>Use these only when an admin needs to intervene in the active week.</p></div><span class="badge">Admin</span></div>
+          <div class="section-head"><div><h2>Current Week Actions</h2></div><span class="badge">Admin</span></div>
           <div class="stack">
-            <div class="action-box"><h3>1. Assign to next person</h3><p class="muted">Use when the assigned person informs in advance. The next person covers this week, and the original person becomes next week’s duty.</p><button id="assignNext" class="warn" style="margin-top:12px;">Assign This Week To Next Person</button></div>
-            <div class="action-box"><h3>Admin confirmation: completed</h3><p class="muted">Use when the duty was completed successfully. Rotation advances normally.</p><button id="markComplete" class="secondary" style="margin-top:12px;">Mark Current Week Completed</button></div>
-            <div class="action-box"><h3>2. Carry over to next week</h3><p class="muted">Use when the duty was missed. The same original person remains responsible next week.</p><button id="carryOver" class="danger" style="margin-top:12px;">Carry Current Duty To Next Week</button></div>
+            <div class="action-box"><h3>Approve as completed</h3><button id="markComplete" class="secondary" style="margin-top:12px;">Approve Week As Completed</button></div>
+            <div class="action-box"><h3>Approve as missed</h3><button id="carryOver" class="danger" style="margin-top:12px;">Approve Week As Missed</button></div>
           </div>
           <p id="actionStatus" class="status"></p>
         </section>
 
         <section class="card span-5">
-          <div class="section-head"><div><h2>Upcoming Schedule</h2><p>Normalized Halifax events that feed the weekly duty windows.</p></div></div>
+          <div class="section-head"><div><h2>Upcoming Schedule</h2></div></div>
           <div id="events" class="timeline"></div>
         </section>
 
         <section class="card span-7">
-          <div class="section-head"><div><h2>Assignments</h2><p>Recent weekly records plus the next predicted duty owner.</p></div></div>
+          <div class="section-head"><div><h2>Assignments</h2></div></div>
           <div id="assignments" class="assignments"></div>
         </section>
 
-        <section class="card span-5">
-          <div class="section-head"><div><h2>Housemates</h2><p>Admins can edit phones, notes, status, skip-once state, and rotation order here.</p></div></div>
+        <section id="housematesCard" class="card span-5">
+          <div class="section-head"><div><h2>Housemates</h2></div></div>
           <div id="housemates" class="people"></div>
         </section>
       </section>
@@ -138,6 +138,7 @@ export function renderAdminPage(): string {
       let state = null;
       let auth = { isAdmin: false, username: "admin" };
       let nextAssignmentPreview = null;
+      let dashboardToday = null;
 
       async function fetchJson(url, options) {
         const requestOptions = { ...(options || {}) };
@@ -160,6 +161,24 @@ export function renderAdminPage(): string {
         return String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
       }
 
+      function titleCaseStream(stream) {
+        if (stream === "garbage") return "Garbage";
+        if (stream === "recycling") return "Recycling";
+        if (stream === "organics") return "Organics";
+        return stream;
+      }
+
+      function joinNaturally(values) {
+        if (values.length === 0) return "Unknown";
+        if (values.length === 1) return values[0];
+        if (values.length === 2) return values[0] + " and " + values[1];
+        return values.slice(0, -1).join(", ") + ", and " + values[values.length - 1];
+      }
+
+      function formatStreamLabel(streams) {
+        return joinNaturally((streams || []).map(titleCaseStream));
+      }
+
       function housemateName(id) {
         const housemate = state.housemates.find(function (entry) { return entry.id === id; });
         return housemate ? housemate.name : id;
@@ -169,13 +188,45 @@ export function renderAdminPage(): string {
         return state.collectionEvents.find(function (entry) { return entry.id === id; }) || null;
       }
 
+      function assignmentPickupLabel(assignment) {
+        const event = assignment ? eventById(assignment.collectionEventId) : null;
+        return event ? formatStreamLabel(event.streams) : "Unknown";
+      }
+
       function getToday() {
-        return new Date().toISOString().slice(0, 10);
+        return dashboardToday || new Intl.DateTimeFormat("en-CA", { timeZone: (state && state.config && state.config.timezone) || "UTC", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+      }
+
+      function housemateOptions(selectedId, allowBlank) {
+        const options = [];
+        if (allowBlank) {
+          options.push('<option value="">Not set</option>');
+        }
+        state.housemates.forEach(function (housemate) {
+          options.push('<option value="' + escapeHtml(housemate.id) + '"' + (housemate.id === selectedId ? " selected" : "") + '>' + escapeHtml(housemate.name + " (Room " + housemate.roomNumber + ")") + '</option>');
+        });
+        return options.join("");
       }
 
       function getCurrentAssignment() {
         const today = getToday();
         return state.assignments.find(function (assignment) { return assignment.weekStart <= today && assignment.weekEnd >= today; }) || null;
+      }
+
+      function isAssignmentResolved(assignment) {
+        return assignment && (assignment.completionStatus === "completed" || assignment.completionStatus === "not_completed");
+      }
+
+      function getAssignmentAwaitingApproval() {
+        const activeAssignment = getCurrentAssignment();
+        if (activeAssignment && !isAssignmentResolved(activeAssignment)) {
+          return activeAssignment;
+        }
+
+        const today = getToday();
+        return state.assignments.slice().sort(function (left, right) { return right.weekEnd.localeCompare(left.weekEnd); }).find(function (assignment) {
+          return assignment.weekEnd < today && !isAssignmentResolved(assignment);
+        }) || null;
       }
 
       function getUpcomingEvents() {
@@ -191,19 +242,23 @@ export function renderAdminPage(): string {
 
       function formatActionMessage(url, result) {
         if (url.includes("/api/jobs/sync-schedule")) return result.synced ? "Halifax schedule synced successfully." : "Schedule sync completed.";
+        if (url.includes("/api/jobs/run-daily-maintenance")) return "Daily maintenance completed.";
         if (url.includes("/api/jobs/run-weekly-duty")) return result.created ? "Weekly duty flow completed." : (result.reason || "No assignment was created.");
+        if (url.includes("/api/jobs/send-day-before-reminder")) return result.sent ? "Day-before reminder sent." : (result.reason || "Day-before reminder not sent.");
         if (url.includes("/api/jobs/resend-weekly")) return result.resent ? "Weekly reminder resent." : (result.reason || "Weekly resend finished.");
         if (url.includes("/api/jobs/send-completion-check")) return result.sent ? "Completion check message sent to admin." : (result.reason || "Completion check not sent.");
         if (url.includes("/api/assignments/current/reassign-next")) return "This week has been reassigned to the next person.";
-        if (url.includes("/api/assignments/current/complete")) return "Current week marked as completed.";
-        if (url.includes("/api/assignments/current/carry-over")) return "Current duty has been carried over to next week.";
+        if (url.includes("/api/assignments/current/complete")) return "Week approved as completed.";
+        if (url.includes("/api/assignments/current/carry-over")) return "Week approved as missed and will stay with the same person.";
+        if (url.includes("/api/assignments/")) return "Assignment record updated.";
+        if (url.includes("/api/collection-events/")) return "Collection event updated.";
         if (url.includes("/api/housemates/reorder")) return "Housemate order updated.";
         return "Action completed successfully.";
       }
 
       function renderAuthPanel() {
         document.getElementById("authTitle").textContent = auth.isAdmin ? "Admin Control" : "Dashboard Viewer";
-        document.getElementById("authNote").textContent = auth.isAdmin ? "Signed in as " + auth.username + ". Manual actions and edits are enabled." : "Sign in as admin to unlock edits and manual actions.";
+        document.getElementById("authNote").textContent = "";
         document.getElementById("authPanel").innerHTML = auth.isAdmin
           ? '<div class="inline-actions"><span class="badge">Admin</span><button id="logoutButton" class="ghost" type="button">Log Out</button></div>'
           : '<form id="loginForm" class="stack"><label class="field"><span>Username</span><input id="adminUsername" type="text" autocomplete="username" value="' + escapeHtml(auth.username || "admin") + '" /></label><label class="field"><span>Password</span><input id="adminPassword" type="password" autocomplete="current-password" /></label><button type="submit">Admin Login</button></form>';
@@ -239,42 +294,41 @@ export function renderAdminPage(): string {
         document.getElementById("opsBadge").textContent = auth.isAdmin ? "Admin" : "Viewer";
         document.getElementById("opsBadge").className = auth.isAdmin ? "badge" : "badge viewer";
         document.getElementById("operationsButtons").innerHTML = auth.isAdmin
-          ? '<button id="syncSchedule">Sync Halifax</button><button id="runWeekly">Run Weekly Duty</button><button id="resendWeekly" class="secondary">Resend Weekly</button><button id="sendCompletionCheck" class="warn">Send 11AM Check</button>'
+          ? '<button id="syncSchedule">Sync Halifax</button><button id="runDailyMaintenance" class="secondary">Run Daily Maintenance</button><button id="runWeekly">Run Weekly Duty</button><button id="sendDayBeforeReminder" class="secondary">Send Day-Before Reminder</button><button id="resendWeekly" class="secondary">Resend Weekly</button><button id="sendCompletionCheck" class="warn">Send 11AM Check</button>'
           : '<button id="syncSchedule">Sync Halifax</button>';
         document.getElementById("currentWeekActionsCard").hidden = !auth.isAdmin;
+        document.getElementById("housematesCard").hidden = !auth.isAdmin;
       }
 
       function renderSummary() {
         const currentAssignment = getCurrentAssignment();
-        const nextEvent = getUpcomingEvents()[0] || null;
-        document.getElementById("heroMeta").innerHTML = [
-          '<div class="tile"><strong>Address:</strong> ' + escapeHtml(state.config.address) + '</div>',
-          '<div class="tile"><strong>Schedule:</strong> ' + escapeHtml(state.config.scheduleSource) + '</div>',
-          '<div class="tile"><strong>Admin user:</strong> ' + escapeHtml(auth.username || "admin") + '</div>'
-        ].join("");
+        const awaitingApproval = getAssignmentAwaitingApproval();
+        const heroMeta = ['<div class="tile"><strong>Schedule:</strong> ' + escapeHtml(state.config.scheduleSource) + '</div>'];
+        const showApprovalState = auth.isAdmin;
+        document.getElementById("heroMeta").innerHTML = heroMeta.join("");
         document.getElementById("miniCurrentAssignee").textContent = currentAssignment ? housemateName(currentAssignment.assigneeId) : "None";
         document.getElementById("miniCurrentWindow").textContent = currentAssignment ? currentAssignment.weekStart + " to " + currentAssignment.weekEnd : "No active assignment";
-        document.getElementById("miniNextCollection").textContent = nextEvent ? nextEvent.date : "-";
-        document.getElementById("miniNextStreams").textContent = nextEvent ? nextEvent.streams.join(", ") : "Waiting for sync";
-        document.getElementById("miniNextWeek").textContent = nextAssignmentPreview ? housemateName(nextAssignmentPreview.assigneeId) : "Auto";
-        document.getElementById("miniNextWeekNote").textContent = nextAssignmentPreview ? (nextAssignmentPreview.weekStart + " to " + nextAssignmentPreview.weekEnd) : "Normal rotation will continue.";
+        document.getElementById("miniNextCollection").textContent = currentAssignment ? assignmentPickupLabel(currentAssignment) : "-";
+        document.getElementById("miniNextStreams").textContent = currentAssignment ? (currentAssignment.weekStart + " to " + currentAssignment.weekEnd) : "No active assignment";
+        document.getElementById("miniNextWeek").textContent = nextAssignmentPreview ? housemateName(nextAssignmentPreview.assigneeId) : (showApprovalState && awaitingApproval ? "Pending" : "Auto");
+        document.getElementById("miniNextWeekNote").textContent = nextAssignmentPreview ? (nextAssignmentPreview.weekStart + " to " + nextAssignmentPreview.weekEnd) : "";
         document.getElementById("summary").innerHTML = [
-          ["Last assigned", state.rotation.lastAssignedHousemateId ? housemateName(state.rotation.lastAssignedHousemateId) : "None"],
-          ["Current status", currentAssignment ? currentAssignment.status : "None"],
-          ["Completion check", currentAssignment && currentAssignment.completionStatus ? currentAssignment.completionStatus : "Not started"],
-          ["Skip-once queue", (state.rotation.skipOnceHousemateIds || []).map(housemateName).join(", ") || "Empty"]
+          ["Current Week", currentAssignment ? housemateName(currentAssignment.assigneeId) : "None"],
+          ["Window", currentAssignment ? (currentAssignment.weekStart + " to " + currentAssignment.weekEnd) : "No active assignment"],
+          ["Pickup", currentAssignment ? assignmentPickupLabel(currentAssignment) : "Unknown"],
+          ["Next Assignment", nextAssignmentPreview ? housemateName(nextAssignmentPreview.assigneeId) : (showApprovalState && awaitingApproval ? "Waiting for approval" : "Not ready yet")]
         ].map(function (item) { return '<div class="tile"><div class="label">' + item[0] + '</div><div class="detail"><div class="value">' + escapeHtml(item[1]) + '</div></div></div>'; }).join("");
         document.getElementById("metrics").innerHTML = [
-          ["Assignments", state.assignments.length, "Tracked weekly records"],
-          ["Reassigned Weeks", state.assignments.filter(function (entry) { return entry.reassignedToNextPerson; }).length, "Advance notices handled"],
-          ["Missed Weeks", state.assignments.filter(function (entry) { return entry.status === "missed"; }).length, "Weeks carried forward"],
-          ["Active Housemates", state.housemates.filter(function (entry) { return entry.isActive; }).length, "Eligible for duty"]
-        ].map(function (metric) { return '<div class="metric"><div class="label">' + metric[0] + '</div><div class="value-big">' + metric[1] + '</div><div class="muted">' + metric[2] + '</div></div>'; }).join("");
+          ["Assignments", state.assignments.length],
+          ["Awaiting Approval", state.assignments.filter(function (entry) { return !isAssignmentResolved(entry); }).length],
+          ["Missed Weeks", state.assignments.filter(function (entry) { return entry.status === "missed"; }).length],
+          ["Active Housemates", state.housemates.filter(function (entry) { return entry.isActive; }).length]
+        ].map(function (metric) { return '<div class="metric"><div class="label">' + metric[0] + '</div><div class="value-big">' + metric[1] + '</div></div>'; }).join("");
       }
 
       function renderEvents() {
         document.getElementById("events").innerHTML = getUpcomingEvents().map(function (event) {
-          return '<article class="timeline-item"><div><div><strong>' + escapeHtml(event.date) + '</strong></div><div class="muted">' + escapeHtml(event.weekStart + " to " + event.weekEnd) + '</div></div><div><div><strong>Source:</strong> ' + escapeHtml(event.source) + '</div><div class="streams">' + event.streams.map(function (stream) { return '<span class="stream">' + escapeHtml(stream) + '</span>'; }).join("") + '</div></div></article>';
+          return '<article class="timeline-item"><div><div><strong>' + escapeHtml(formatStreamLabel(event.streams)) + '</strong></div><div class="muted">' + escapeHtml(event.weekStart + " to " + event.weekEnd) + '</div></div><div><div class="label">Collection</div><div class="value">' + escapeHtml(event.date) + '</div><div class="streams">' + event.streams.map(function (stream) { return '<span class="stream">' + escapeHtml(titleCaseStream(stream)) + '</span>'; }).join("") + '</div></div></article>';
         }).join("");
       }
 
@@ -282,21 +336,24 @@ export function renderAdminPage(): string {
         const cards = [];
         if (nextAssignmentPreview) {
           const previewEvent = eventById(nextAssignmentPreview.collectionEventId);
-          const skipped = nextAssignmentPreview.skippedHousemateIds && nextAssignmentPreview.skippedHousemateIds.length > 0 ? nextAssignmentPreview.skippedHousemateIds.map(housemateName).join(", ") : "None";
-          cards.push('<article class="assignment-card preview"><div class="row-between"><div><div><strong>Next Week: ' + escapeHtml(housemateName(nextAssignmentPreview.assigneeId)) + '</strong></div><div class="muted">' + escapeHtml(nextAssignmentPreview.weekStart + " to " + nextAssignmentPreview.weekEnd) + '</div></div><span class="badge">' + escapeHtml(nextAssignmentPreview.selectionMode) + '</span></div><div class="detail-grid"><div class="detail"><div class="label">Collection</div><div class="value">' + escapeHtml(previewEvent ? previewEvent.date : nextAssignmentPreview.weekEnd) + '</div></div><div class="detail"><div class="label">Streams</div><div class="value">' + escapeHtml(previewEvent ? previewEvent.streams.join(", ") : "Unknown") + '</div></div><div class="detail"><div class="label">Skipped once</div><div class="value">' + escapeHtml(skipped) + '</div></div></div></article>');
+          cards.push('<article class="assignment-card preview"><div class="row-between"><div><div><strong>' + escapeHtml(nextAssignmentPreview.weekStart + " to " + nextAssignmentPreview.weekEnd) + '</strong></div><div class="muted">' + escapeHtml(previewEvent ? formatStreamLabel(previewEvent.streams) : "Unknown") + '</div></div><span class="badge">rotation</span></div><div class="detail-grid"><div class="detail"><div class="label">Assignee</div><div class="value">' + escapeHtml(housemateName(nextAssignmentPreview.assigneeId)) + '</div></div><div class="detail"><div class="label">Collection</div><div class="value">' + escapeHtml(previewEvent ? previewEvent.date : nextAssignmentPreview.weekEnd) + '</div></div><div class="detail"><div class="label">Status</div><div class="value">Queued</div></div></div></article>');
         }
         state.assignments.slice().reverse().forEach(function (assignment) {
           const performer = assignment.actualPerformerId ? housemateName(assignment.actualPerformerId) : "Not recorded yet";
-          cards.push('<article class="assignment-card"><div class="row-between"><div><div><strong>' + escapeHtml(housemateName(assignment.assigneeId)) + '</strong></div><div class="muted">' + escapeHtml(assignment.weekStart + " to " + assignment.weekEnd) + '</div><div class="mono">' + escapeHtml(assignment.id) + '</div></div><span class="badge">' + escapeHtml(assignment.status) + '</span></div><div class="detail-grid"><div class="detail"><div class="label">Actual performer</div><div class="value">' + escapeHtml(performer) + '</div></div><div class="detail"><div class="label">Completion</div><div class="value">' + escapeHtml(assignment.completionStatus || "pending") + '</div></div><div class="detail"><div class="label">Flow</div><div class="value">' + escapeHtml(assignment.reassignedToNextPerson ? "Assigned to next person" : assignment.carryOverToNextWeek ? "Carried over" : "Normal") + '</div></div></div></article>');
+          cards.push('<article class="assignment-card"><div class="row-between"><div><div><strong>' + escapeHtml(assignment.weekStart + " to " + assignment.weekEnd) + '</strong></div><div class="muted">' + escapeHtml(assignmentPickupLabel(assignment)) + '</div></div><span class="badge">' + escapeHtml(assignment.status) + '</span></div><div class="detail-grid"><div class="detail"><div class="label">Assignee</div><div class="value">' + escapeHtml(housemateName(assignment.assigneeId)) + '</div></div><div class="detail"><div class="label">Actual performer</div><div class="value">' + escapeHtml(performer) + '</div></div><div class="detail"><div class="label">Completion</div><div class="value">' + escapeHtml(assignment.completionStatus || "pending") + '</div></div></div></article>');
         });
         document.getElementById("assignments").innerHTML = cards.join("");
       }
 
       function renderHousemates() {
+        if (!auth.isAdmin) {
+          document.getElementById("housemates").innerHTML = "";
+          return;
+        }
+
         document.getElementById("housemates").innerHTML = state.housemates.map(function (housemate, index) {
-          const isSkipOnce = (state.rotation.skipOnceHousemateIds || []).includes(housemate.id);
           const adminForm = auth.isAdmin
-            ? '<div class="person-form"><div class="inline-actions"><button type="button" class="ghost move-up" data-id="' + escapeHtml(housemate.id) + '"' + (index === 0 ? " disabled" : "") + '>Move Up</button><button type="button" class="ghost move-down" data-id="' + escapeHtml(housemate.id) + '"' + (index === state.housemates.length - 1 ? " disabled" : "") + '>Move Down</button></div><div class="form-grid" style="margin-top:12px;"><label class="field"><span>Name</span><input id="housemate-name-' + escapeHtml(housemate.id) + '" type="text" value="' + escapeHtml(housemate.name) + '" /></label><label class="field"><span>Room</span><input id="housemate-room-' + escapeHtml(housemate.id) + '" type="text" value="' + escapeHtml(housemate.roomNumber) + '" /></label><label class="field"><span>Phone</span><input id="housemate-phone-' + escapeHtml(housemate.id) + '" type="text" value="' + escapeHtml(housemate.whatsappNumber || "") + '" placeholder="+1782..." /></label><label class="field"><span>Status</span><select id="housemate-active-' + escapeHtml(housemate.id) + '"><option value="true"' + (housemate.isActive ? " selected" : "") + '>Active</option><option value="false"' + (!housemate.isActive ? " selected" : "") + '>Inactive</option></select></label><label class="field"><span>Skip next turn once</span><select id="housemate-skip-' + escapeHtml(housemate.id) + '"><option value="false"' + (!isSkipOnce ? " selected" : "") + '>No</option><option value="true"' + (isSkipOnce ? " selected" : "") + '>Yes</option></select></label><label class="field"><span>Notes</span><textarea id="housemate-notes-' + escapeHtml(housemate.id) + '" rows="2">' + escapeHtml(housemate.notes || "") + '</textarea></label></div><div class="inline-actions" style="margin-top:12px;"><button type="button" class="secondary save-housemate" data-id="' + escapeHtml(housemate.id) + '">Save Changes</button></div></div>'
+            ? '<div class="person-form"><div class="inline-actions"><button type="button" class="ghost move-up" data-id="' + escapeHtml(housemate.id) + '"' + (index === 0 ? " disabled" : "") + '>Move Up</button><button type="button" class="ghost move-down" data-id="' + escapeHtml(housemate.id) + '"' + (index === state.housemates.length - 1 ? " disabled" : "") + '>Move Down</button></div><div class="form-grid" style="margin-top:12px;"><label class="field"><span>Name</span><input id="housemate-name-' + escapeHtml(housemate.id) + '" type="text" value="' + escapeHtml(housemate.name) + '" /></label><label class="field"><span>Room</span><input id="housemate-room-' + escapeHtml(housemate.id) + '" type="text" value="' + escapeHtml(housemate.roomNumber) + '" /></label><label class="field"><span>Phone</span><input id="housemate-phone-' + escapeHtml(housemate.id) + '" type="text" value="' + escapeHtml(housemate.whatsappNumber || "") + '" placeholder="+1782..." /></label><label class="field"><span>Status</span><select id="housemate-active-' + escapeHtml(housemate.id) + '"><option value="true"' + (housemate.isActive ? " selected" : "") + '>Active</option><option value="false"' + (!housemate.isActive ? " selected" : "") + '>Inactive</option></select></label><label class="field"><span>Notes</span><textarea id="housemate-notes-' + escapeHtml(housemate.id) + '" rows="2">' + escapeHtml(housemate.notes || "") + '</textarea></label></div><div class="inline-actions" style="margin-top:12px;"><button type="button" class="secondary save-housemate" data-id="' + escapeHtml(housemate.id) + '">Save Changes</button></div></div>'
             : "";
           return '<article class="person-card"><div class="row-between"><div><div><strong>' + escapeHtml(housemate.name) + '</strong></div><div class="muted">Room ' + escapeHtml(housemate.roomNumber) + '</div></div><span class="badge" style="background:' + (housemate.isActive ? "var(--accent-2-soft); color:#47601e;" : "var(--alert-soft); color: var(--alert);") + '">' + (housemate.isActive ? "active" : "inactive") + '</span></div><div class="detail-grid"><div class="detail"><div class="label">Phone</div><div class="value">' + escapeHtml(housemate.whatsappNumber || "Not set") + '</div></div><div class="detail"><div class="label">Notes</div><div class="value">' + escapeHtml(housemate.notes || "None") + '</div></div><div class="detail"><div class="label">Role</div><div class="value">' + (housemate.isActive ? "In rotation" : "Skipped") + '</div></div></div>' + adminForm + '</article>';
         }).join("");
@@ -319,6 +376,7 @@ export function renderAdminPage(): string {
 
       async function refreshDashboard() {
         const dashboard = await fetchJson("/api/dashboard");
+        dashboardToday = dashboard.today;
         state = dashboard.state;
         auth = dashboard.auth;
         nextAssignmentPreview = dashboard.nextAssignmentPreview;
@@ -343,7 +401,7 @@ export function renderAdminPage(): string {
       async function saveHousemate(id) {
         setStatus("opsStatus", "Saving housemate changes...");
         try {
-          await fetchJson("/api/housemates/" + encodeURIComponent(id), { method: "PATCH", body: JSON.stringify({ name: document.getElementById("housemate-name-" + id).value, roomNumber: document.getElementById("housemate-room-" + id).value, whatsappNumber: document.getElementById("housemate-phone-" + id).value, isActive: document.getElementById("housemate-active-" + id).value === "true", skipNextTurn: document.getElementById("housemate-skip-" + id).value === "true", notes: document.getElementById("housemate-notes-" + id).value }) });
+          await fetchJson("/api/housemates/" + encodeURIComponent(id), { method: "PATCH", body: JSON.stringify({ name: document.getElementById("housemate-name-" + id).value, roomNumber: document.getElementById("housemate-room-" + id).value, whatsappNumber: document.getElementById("housemate-phone-" + id).value, isActive: document.getElementById("housemate-active-" + id).value === "true", notes: document.getElementById("housemate-notes-" + id).value }) });
           setStatus("opsStatus", "Housemate updated.", "ok");
           await refreshDashboard();
         } catch (error) {
@@ -372,14 +430,16 @@ export function renderAdminPage(): string {
 
       function bindActionButtons() {
         document.getElementById("syncSchedule").onclick = function () { return postAction("/api/jobs/sync-schedule", "opsStatus", false); };
+        const runDailyMaintenanceButton = document.getElementById("runDailyMaintenance");
+        if (runDailyMaintenanceButton) runDailyMaintenanceButton.onclick = function () { return postAction("/api/jobs/run-daily-maintenance", "opsStatus", true); };
         const runWeeklyButton = document.getElementById("runWeekly");
         if (runWeeklyButton) runWeeklyButton.onclick = function () { return postAction("/api/jobs/run-weekly-duty", "opsStatus", true); };
+        const sendDayBeforeReminderButton = document.getElementById("sendDayBeforeReminder");
+        if (sendDayBeforeReminderButton) sendDayBeforeReminderButton.onclick = function () { return postAction("/api/jobs/send-day-before-reminder", "opsStatus", true); };
         const resendWeeklyButton = document.getElementById("resendWeekly");
         if (resendWeeklyButton) resendWeeklyButton.onclick = function () { return postAction("/api/jobs/resend-weekly", "opsStatus", true); };
         const sendCompletionCheckButton = document.getElementById("sendCompletionCheck");
         if (sendCompletionCheckButton) sendCompletionCheckButton.onclick = function () { return postAction("/api/jobs/send-completion-check", "opsStatus", true); };
-        const assignNextButton = document.getElementById("assignNext");
-        if (assignNextButton) assignNextButton.onclick = function () { return postAction("/api/assignments/current/reassign-next", "actionStatus", true); };
         const markCompleteButton = document.getElementById("markComplete");
         if (markCompleteButton) markCompleteButton.onclick = function () { return postAction("/api/assignments/current/complete", "actionStatus", true); };
         const carryOverButton = document.getElementById("carryOver");
@@ -391,3 +451,7 @@ export function renderAdminPage(): string {
   </body>
 </html>`;
 }
+
+
+
+

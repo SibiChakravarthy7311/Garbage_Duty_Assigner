@@ -49,8 +49,6 @@ export interface Assignment {
 
 export interface RotationState {
   lastAssignedHousemateId?: string;
-  nextForcedHousemateId?: string;
-  skipOnceHousemateIds?: string[];
 }
 
 export interface AppConfigState {

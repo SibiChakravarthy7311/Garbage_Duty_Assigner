@@ -1,8 +1,22 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { createDefaultState } from "./defaultState.js";
-import type { AppState } from "../domain/types.js";
+import type { AppState, Assignment } from "../domain/types.js";
 import { normalizeCollectionEvents } from "../services/collectionEventUtils.js";
+import { getZonedDateTimeParts } from "../lib/zonedDateTime.js";
+
+const MAX_PAST_ASSIGNMENTS = 7;
+
+function trimAssignments(assignments: Assignment[], timezone: string): Assignment[] {
+  const today = getZonedDateTimeParts(timezone).date;
+  const sortedAssignments = assignments
+    .slice()
+    .sort((left, right) => left.weekStart.localeCompare(right.weekStart) || left.createdAt.localeCompare(right.createdAt));
+  const pastAssignments = sortedAssignments.filter((assignment) => assignment.weekEnd < today);
+  const retainedPastAssignments = pastAssignments.slice(-MAX_PAST_ASSIGNMENTS);
+  const activeOrFutureAssignments = sortedAssignments.filter((assignment) => assignment.weekEnd >= today);
+  return [...retainedPastAssignments, ...activeOrFutureAssignments];
+}
 
 export class FileStore {
   constructor(
@@ -18,7 +32,8 @@ export class FileStore {
       const state = JSON.parse(raw) as AppState;
       return {
         ...state,
-        collectionEvents: normalizeCollectionEvents(state.collectionEvents ?? [])
+        collectionEvents: normalizeCollectionEvents(state.collectionEvents ?? []),
+        assignments: trimAssignments(state.assignments ?? [], this.timezone)
       };
     } catch (error) {
       const code = (error as NodeJS.ErrnoException).code;
@@ -33,7 +48,12 @@ export class FileStore {
   }
 
   async save(state: AppState): Promise<void> {
+    const normalizedState: AppState = {
+      ...state,
+      collectionEvents: normalizeCollectionEvents(state.collectionEvents ?? []),
+      assignments: trimAssignments(state.assignments ?? [], this.timezone)
+    };
     await fs.mkdir(path.dirname(this.stateFile), { recursive: true });
-    await fs.writeFile(this.stateFile, JSON.stringify(state, null, 2), "utf8");
+    await fs.writeFile(this.stateFile, JSON.stringify(normalizedState, null, 2), "utf8");
   }
 }

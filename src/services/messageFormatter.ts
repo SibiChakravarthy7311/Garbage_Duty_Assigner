@@ -1,4 +1,5 @@
 import type { WeeklyDutyNotification, WasteStream } from "../domain/types.js";
+import { sortWasteStreams } from "./collectionEventUtils.js";
 
 function parseIsoDate(date: string): Date {
   return new Date(`${date}T00:00:00Z`);
@@ -38,11 +39,11 @@ function joinNaturally(values: string[]): string {
 }
 
 function formatStreamLabel(streams: WasteStream[]): string {
-  return joinNaturally(streams.map(titleCaseStream));
+  return joinNaturally(sortWasteStreams(streams).map(titleCaseStream));
 }
 
 function buildChecklist(streams: WasteStream[]): string[] {
-  const uniqueStreams = Array.from(new Set(streams));
+  const uniqueStreams = sortWasteStreams(streams);
   const bullets: string[] = ["replace liners where needed"];
 
   if (uniqueStreams.includes("garbage")) {
@@ -86,15 +87,30 @@ export function formatWeeklyDutyMessage(notification: WeeklyDutyNotification): s
 }
 
 export function formatBackupReminderMessage(notification: WeeklyDutyNotification): string {
-  return formatWeeklyDutyMessage(notification);
+  const streamLabel = formatStreamLabel(notification.collectionEvent.streams);
+  const organicsNote = notification.collectionEvent.streams.includes("organics")
+    ? "Remember to empty and secure the organics bags or bins as part of tonight's set-out."
+    : "If anything is not ready yet, tonight is the best time to get it out.";
+
+  return [
+    "Collection Is Tomorrow",
+    "",
+    `${notification.assignee.name} is on duty for this week's collection.`,
+    `Collection day: ${formatDate(notification.collectionEvent.date, true)}`,
+    `Set out tonight: ${streamLabel}`,
+    "",
+    organicsNote,
+    "Please make sure everything is curbside before 8:00 a.m. tomorrow."
+  ].join("\n");
 }
 
 export function formatCompletionCheckMessage(notification: WeeklyDutyNotification): string {
   const adminLine = notification.adminUrl ? `Review: ${notification.adminUrl}.` : undefined;
+  const streamLabel = formatStreamLabel(notification.collectionEvent.streams);
 
   return [
     `Collection check: was this week's duty completed by ${notification.assignee.name}?`,
-    `Collection date: ${notification.collectionEvent.date}.`,
+    `Collection date: ${notification.collectionEvent.date} for ${streamLabel}.`,
     "If completed, mark it complete. If not completed, carry it over to next week.",
     adminLine
   ].filter(Boolean).join(" ");

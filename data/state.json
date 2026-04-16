@@ -9,8 +9,7 @@
       "id": "housemate_4",
       "name": "Mandeep",
       "roomNumber": "1",
-      "isActive": true,
-      "notes": "Newly moved in"
+      "isActive": true
     },
     {
       "id": "housemate_3",
@@ -101,67 +100,13 @@
   ],
   "collectionEvents": [
     {
-      "id": "event_2026_02_09",
-      "date": "2026-02-09",
-      "weekStart": "2026-02-02",
-      "weekEnd": "2026-02-09",
-      "streams": [
-        "recycling"
-      ],
-      "status": "scheduled",
-      "source": "halifax-live"
-    },
-    {
-      "id": "event_2026_02_14",
-      "date": "2026-02-14",
-      "weekStart": "2026-02-09",
-      "weekEnd": "2026-02-14",
-      "streams": [
-        "garbage"
-      ],
-      "status": "scheduled",
-      "source": "halifax-live"
-    },
-    {
-      "id": "event_2026_02_23",
-      "date": "2026-02-23",
-      "weekStart": "2026-02-14",
-      "weekEnd": "2026-02-23",
-      "streams": [
-        "recycling"
-      ],
-      "status": "scheduled",
-      "source": "halifax-live"
-    },
-    {
-      "id": "event_2026_03_02",
-      "date": "2026-03-02",
-      "weekStart": "2026-02-23",
-      "weekEnd": "2026-03-02",
-      "streams": [
-        "garbage"
-      ],
-      "status": "scheduled",
-      "source": "halifax-live"
-    },
-    {
-      "id": "event_2026_03_09",
-      "date": "2026-03-09",
-      "weekStart": "2026-03-02",
-      "weekEnd": "2026-03-09",
-      "streams": [
-        "recycling"
-      ],
-      "status": "scheduled",
-      "source": "halifax-live"
-    },
-    {
       "id": "event_2026_03_16",
       "date": "2026-03-16",
       "weekStart": "2026-03-09",
       "weekEnd": "2026-03-16",
       "streams": [
-        "garbage"
+        "garbage",
+        "organics"
       ],
       "status": "scheduled",
       "source": "halifax-live"
@@ -172,7 +117,8 @@
       "weekStart": "2026-03-16",
       "weekEnd": "2026-03-23",
       "streams": [
-        "recycling"
+        "recycling",
+        "organics"
       ],
       "status": "scheduled",
       "source": "halifax-live"
@@ -183,7 +129,8 @@
       "weekStart": "2026-03-23",
       "weekEnd": "2026-03-30",
       "streams": [
-        "garbage"
+        "garbage",
+        "organics"
       ],
       "status": "scheduled",
       "source": "halifax-live"
@@ -194,7 +141,8 @@
       "weekStart": "2026-03-30",
       "weekEnd": "2026-04-06",
       "streams": [
-        "recycling"
+        "recycling",
+        "organics"
       ],
       "status": "scheduled",
       "source": "halifax-live"
@@ -205,7 +153,8 @@
       "weekStart": "2026-04-06",
       "weekEnd": "2026-04-13",
       "streams": [
-        "garbage"
+        "garbage",
+        "organics"
       ],
       "status": "scheduled",
       "source": "halifax-live"
@@ -216,7 +165,8 @@
       "weekStart": "2026-04-13",
       "weekEnd": "2026-04-20",
       "streams": [
-        "recycling"
+        "recycling",
+        "organics"
       ],
       "status": "scheduled",
       "source": "halifax-live"
@@ -227,7 +177,8 @@
       "weekStart": "2026-04-20",
       "weekEnd": "2026-04-27",
       "streams": [
-        "garbage"
+        "garbage",
+        "organics"
       ],
       "status": "scheduled",
       "source": "halifax-live"
@@ -238,7 +189,8 @@
       "weekStart": "2026-04-27",
       "weekEnd": "2026-05-04",
       "streams": [
-        "recycling"
+        "recycling",
+        "organics"
       ],
       "status": "scheduled",
       "source": "halifax-live"
@@ -249,7 +201,8 @@
       "weekStart": "2026-05-04",
       "weekEnd": "2026-05-11",
       "streams": [
-        "garbage"
+        "garbage",
+        "organics"
       ],
       "status": "scheduled",
       "source": "halifax-live"
@@ -260,7 +213,8 @@
       "weekStart": "2026-05-11",
       "weekEnd": "2026-05-16",
       "streams": [
-        "recycling"
+        "recycling",
+        "organics"
       ],
       "status": "scheduled",
       "source": "halifax-live"
@@ -271,7 +225,8 @@
       "weekStart": "2026-05-16",
       "weekEnd": "2026-05-25",
       "streams": [
-        "garbage"
+        "garbage",
+        "organics"
       ],
       "status": "scheduled",
       "source": "halifax-live"
@@ -282,7 +237,8 @@
       "weekStart": "2026-05-25",
       "weekEnd": "2026-06-01",
       "streams": [
-        "recycling"
+        "recycling",
+        "organics"
       ],
       "status": "scheduled",
       "source": "halifax-live"
@@ -293,7 +249,8 @@
       "weekStart": "2026-06-01",
       "weekEnd": "2026-06-08",
       "streams": [
-        "garbage"
+        "garbage",
+        "organics"
       ],
       "status": "scheduled",
       "source": "halifax-live"
@@ -304,7 +261,8 @@
       "weekStart": "2026-06-08",
       "weekEnd": "2026-06-15",
       "streams": [
-        "recycling"
+        "recycling",
+        "organics"
       ],
       "status": "scheduled",
       "source": "halifax-live"
@@ -315,7 +273,8 @@
       "weekStart": "2026-06-15",
       "weekEnd": "2026-06-22",
       "streams": [
-        "garbage"
+        "garbage",
+        "organics"
       ],
       "status": "scheduled",
       "source": "halifax-live"
@@ -326,7 +285,8 @@
       "weekStart": "2026-06-22",
       "weekEnd": "2026-06-29",
       "streams": [
-        "recycling"
+        "recycling",
+        "organics"
       ],
       "status": "scheduled",
       "source": "halifax-live"
@@ -337,7 +297,68 @@
       "weekStart": "2026-06-29",
       "weekEnd": "2026-07-06",
       "streams": [
-        "garbage"
+        "garbage",
+        "organics"
+      ],
+      "status": "scheduled",
+      "source": "halifax-live"
+    },
+    {
+      "id": "event_2026_07_13",
+      "date": "2026-07-13",
+      "weekStart": "2026-07-06",
+      "weekEnd": "2026-07-13",
+      "streams": [
+        "recycling",
+        "organics"
+      ],
+      "status": "scheduled",
+      "source": "halifax-live"
+    },
+    {
+      "id": "event_2026_07_20",
+      "date": "2026-07-20",
+      "weekStart": "2026-07-13",
+      "weekEnd": "2026-07-20",
+      "streams": [
+        "garbage",
+        "organics"
+      ],
+      "status": "scheduled",
+      "source": "halifax-live"
+    },
+    {
+      "id": "event_2026_07_27",
+      "date": "2026-07-27",
+      "weekStart": "2026-07-20",
+      "weekEnd": "2026-07-27",
+      "streams": [
+        "recycling",
+        "organics"
+      ],
+      "status": "scheduled",
+      "source": "halifax-live"
+    },
+    {
+      "id": "event_2026_08_01",
+      "date": "2026-08-01",
+      "weekStart": "2026-07-27",
+      "weekEnd": "2026-08-01",
+      "streams": [
+        "garbage",
+        "organics"
+      ],
+      "status": "scheduled",
+      "source": "halifax-live"
+    },
+    {
+      "id": "event_2026_08_10",
+      "date": "2026-08-10",
+      "weekStart": "2026-08-01",
+      "weekEnd": "2026-08-10",
+      "streams": [
+        "recycling",
+        "organics"
       ],
       "status": "scheduled",
       "source": "halifax-live"
@@ -345,38 +366,17 @@
   ],
   "assignments": [
     {
-      "id": "assignment_2026_03_02",
-      "collectionEventId": "event_2026_03_09",
-      "assigneeId": "housemate_6",
-      "weekStart": "2026-03-02",
-      "weekEnd": "2026-03-09",
-      "primaryReminderSentAt": "2026-03-02T16:00:00.000Z",
-      "completionCheckSentAt": "2026-03-09T15:00:00.000Z",
-      "completionConfirmedAt": "2026-03-09T16:00:00.000Z",
-      "completionStatus": "completed",
-      "actualPerformerId": "housemate_7",
-      "reassignedToNextPerson": true,
-      "carryOverToNextWeek": true,
-      "status": "completed",
-      "createdAt": "2026-03-02T16:00:00.000Z"
-    },
-    {
-      "id": "assignment_2026_03_09",
-      "collectionEventId": "event_2026_03_16",
-      "assigneeId": "housemate_6",
-      "weekStart": "2026-03-09",
-      "weekEnd": "2026-03-16",
+      "id": "assignment_2026_04_13",
+      "collectionEventId": "event_2026_04_20",
+      "assigneeId": "housemate_5",
+      "weekStart": "2026-04-13",
+      "weekEnd": "2026-04-20",
       "status": "assigned",
-      "createdAt": "2026-03-09T16:00:00.000Z",
-      "primaryReminderSentAt": "2026-03-09T16:00:00.000Z",
-      "completionStatus": "pending"
+      "completionStatus": "pending",
+      "createdAt": "2026-04-13T16:00:00.000Z"
     }
   ],
   "rotation": {
-    "lastAssignedHousemateId": "housemate_6",
-    "skipOnceHousemateIds": [
-      "housemate_7",
-      "housemate_4"
-    ]
+    "lastAssignedHousemateId": "housemate_1"
   }
 }

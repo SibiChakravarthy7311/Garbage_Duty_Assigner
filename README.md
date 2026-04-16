@@ -22,7 +22,7 @@ This repo is scaffolded for an MVP:
 - console notifier fallback
 - Telegram bot notifier for development
 - built-in admin page at `/admin`
-- manual override controls for covered, missed, and carry-over assignments
+- admin approval controls for completed and missed weeks
 
 ## Setup
 
@@ -40,14 +40,15 @@ set APP_TIMEZONE=America/Halifax
 set HOUSE_ADDRESS=Your Halifax address
 set ADMIN_USERNAME=admin
 set ADMIN_PASSWORD=changeme
-set SCHEDULE_SOURCE=file
+set SCHEDULE_SOURCE=halifax
 set STATE_FILE=./data/state.json
 set TELEGRAM_BOT_TOKEN=
 set TELEGRAM_CHAT_ID=
-set HALIFAX_IMPORT_FILE=./data/halifaxImport.json
+set HALIFAX_IMPORT_FILE=
+set HALIFAX_PLACE_ID=
 ```
 
-`file` is the recommended default for local development. Switch to `halifax` when you want imported or live Halifax data.
+Use `halifax` for normal operation so the app syncs from the live Halifax/ReCollect schedule. Keep `file` only for local development and test runs.
 
 3. Seed sample data:
 
@@ -219,7 +220,9 @@ This repo includes a `render.yaml` Blueprint for deploying the app as a Render w
 - `POST /api/housemates/reorder`
 - `GET /api/assignments`
 - `POST /api/jobs/sync-schedule`
+- `POST /api/jobs/run-daily-maintenance`
 - `POST /api/jobs/run-weekly-duty`
+- `POST /api/jobs/send-day-before-reminder`
 - `POST /api/jobs/resend-weekly`
 - `POST /api/jobs/send-completion-check`
 
@@ -228,11 +231,12 @@ This repo includes a `render.yaml` Blueprint for deploying the app as a Render w
 - `file` schedule mode uses local sample events and is the default MVP mode.
 - `halifax` schedule mode uses live ReCollect data when `HALIFAX_PLACE_ID` is set.
 - `HALIFAX_IMPORT_FILE` is a fallback import workflow when live fetch is not configured.
+- When the server runs in `halifax` mode, it performs an automatic sync on startup and then every 24 hours.
 - Use `data/halifaxImport.sample.json` as the template for imported official schedule data.
+- The public dashboard hides private housemate contact details. Raw state and housemate APIs are admin-only.
 - Telegram is the default development notifier. Messages are sent to one fixed configured `TELEGRAM_CHAT_ID`, such as your own chat or a house group.
-- Telegram reminders include the assignee's phone number and a direct WhatsApp link when a WhatsApp number is available.
 - Without Telegram credentials, reminders are logged to the console.
 - The admin page supports viewer and admin modes:
   - viewers can inspect the dashboard and run `Sync Halifax`
-  - admins can send reminders, reassign/carry over the current week, edit housemates, and change rotation order
+  - admins can approve completed or missed weeks, send reminders, edit housemates, and change rotation order
 - For live hosting, file-based state is a temporary MVP choice. A hosted production deployment should move app state to a database because many cloud platforms do not guarantee durable local filesystem state across deploys/restarts.
